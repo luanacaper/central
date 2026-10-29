@@ -274,6 +274,7 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .sh.rot td.t-fala textarea { min-width: 320px; font-weight: 600; }
 .sh.rot td.t-cenario textarea, .sh.rot td.t-look textarea { min-width: 200px; }
 .sh.rot td.t-legenda textarea { min-width: 220px; font-style: italic; }
+.sh.rot td.t-edicao textarea { min-width: 240px; }
 .sh.rot td.t-take textarea { min-width: 140px; }
 .sh.rot td.t-seg input { width: 80px; text-align: right; font-family: var(--font-mono); }
 .sh.rot .rctl { white-space: nowrap; padding: 6px; vertical-align: middle; background: transparent; }
@@ -301,8 +302,10 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
   .rot-print th, .rot-print td { border: 1px solid #555; padding: 5px 6px; text-align: left; vertical-align: top; white-space: pre-wrap; }
   .rot-print th { background: #eee; font-size: 9pt; text-transform: uppercase; }
   .rot-print td:first-child { width: 22px; text-align: center; }
-  .rot-print td:nth-child(2) { width: 30%; }
-  .rot-print td:nth-child(3) { width: 18%; font-style: italic; }
+  .rot-print { font-size: 10pt; }
+  .rot-print td:nth-child(2) { width: 26%; }
+  .rot-print td:nth-child(3) { width: 15%; font-style: italic; }
+  .rot-print td:nth-child(8) { width: 16%; }
 }
 /* Corretor */
 .corr { gap: 10px; border-color: var(--warn); }
@@ -426,7 +429,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, aba: "estrategia", cli: "", mes: "" };
+  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -1084,7 +1087,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
 
   /* ---------- Roteiros ---------- */
   const RCAMPOS = [["marca", "Marca / Produto"], ["roupa", "Roupa principal"], ["estilo", "Estilo de vídeo"], ["equip", "Equipamentos e composição"]];
-  const RCOLS = [["fala", "Fala"], ["legenda", "Legenda na tela"], ["cenario", "Cenário"], ["take", "Take (cenas)"], ["seg", "Segundos"], ["look", "Look específico por cena"]];
+  const RCOLS = [["fala", "Fala"], ["legenda", "Legenda na tela"], ["cenario", "Cenário"], ["take", "Take (cenas)"], ["seg", "Segundos"], ["look", "Look específico por cena"], ["edicao", "Descrição técnica de edição"]];
   const rotLocal = {}; const rotTimer = {};
   const rotOf = (id) => rotLocal[id] || state.roteiros.find((r) => r.id === id);
   const podeImprimir = /negocioscreators\.com$/.test(location.hostname);
@@ -1111,7 +1114,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     }
     return r.titulo || "Roteiro sem nome";
   }
-  const novaCena = () => ({ id: "s" + uid(), fala: "", legenda: "", cenario: "", take: "", seg: "", look: "" });
+  const novaCena = () => ({ id: "s" + uid(), fala: "", legenda: "", cenario: "", take: "", seg: "", look: "", edicao: "" });
   async function criarRoteiro(cli, p, row) {
     const c = p && (p.colunas || []).find((x) => x.tipo === "texto");
     const doc = { cliente: cli, planilha: p ? p.id : "", linha: row ? row.id : "", titulo: row && c ? ((row.v || {})[c.id] || "") : "Novo roteiro",
@@ -1126,7 +1129,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const corr = { id: "", carregando: false, itens: null, erro: "" };
   function textosDoRot(r) {
     const seg = [];
-    RCAMPOS.forEach(([k, n]) => { if ((r[k] || "").trim()) seg.push({ key: k, rotulo: n, txt: r[k] }); });
+    RCAMPOS.forEach(([k, n]) => { if (k !== "marca" && (r[k] || "").trim()) seg.push({ key: k, rotulo: n, txt: r[k] }); });
     (r.cenas || []).forEach((c, i) => RCOLS.forEach(([k, n]) => { if (k !== "seg" && (c[k] || "").trim()) seg.push({ key: "c:" + c.id + ":" + k, rotulo: "Cena " + (i + 1) + " · " + n, txt: c[k] }); }));
     return seg;
   }
@@ -1136,7 +1139,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     let pos = 0; const partes = [];
     seg.forEach((s) => { s.ini = pos; partes.push(s.txt); pos += s.txt.length + 2; });
     try {
-      const body = new URLSearchParams({ text: partes.join("\n\n"), language: "pt-BR", level: "picky" });
+      const body = new URLSearchParams({ text: partes.join("\n\n"), language: "pt-BR" });
       const resp = await fetch("https://api.languagetool.org/v2/check", { method: "POST", body });
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       const j = await resp.json();
@@ -1144,10 +1147,23 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         const s = seg.find((x) => m.offset >= x.ini && m.offset < x.ini + x.txt.length);
         if (!s || !(m.replacements || []).length) return null;
         const off = m.offset - s.ini;
-        return { key: s.key, rotulo: s.rotulo, off, len: m.length, trecho: s.txt.substr(off, m.length), sug: m.replacements[0].value, msg: m.message, ctx: s.txt };
+        const trecho = s.txt.substr(off, m.length);
+        const rule = m.rule || {}, cat = (rule.category || {}).id || "";
+        if (["whitespace", "style", "typographical", "locale-violation", "register"].includes(rule.issueType)) return null;
+        if (/STYLE|TYPOGRAPHY|REDUNDANCY|REPETITION/.test(cat) || /estrangeirismo/i.test(m.message || "")) return null;
+        if (!trecho.trim() || (/^[A-ZÀ-Ý0-9]{2,}$/.test(trecho.trim()))) return null;
+        if (dicio().includes(trecho.trim().toLowerCase())) return null;
+        return { key: s.key, rotulo: s.rotulo, off, len: m.length, trecho, sug: m.replacements[0].value, msg: m.message, ctx: s.txt, typo: cat === "TYPOS" };
       }).filter(Boolean);
     } catch (e) { corr.erro = "Não deu para revisar agora (" + (e.message || e) + "). Tente de novo em um minuto."; }
     corr.carregando = false; render();
+  }
+  const dicio = () => ((state.dicio && state.dicio.palavras) || []).map((w) => String(w).toLowerCase());
+  async function aceitarPalavra(it) {
+    const w = it.trecho.trim().toLowerCase();
+    const palavras = Array.from(new Set(dicio().concat([w])));
+    try { await db.doc("config/dicionario").set({ palavras }); } catch (e) { fail(e); }
+    corr.itens = corr.itens.filter((x) => x.trecho.trim().toLowerCase() !== w); render();
   }
   function aplicarCorrecoes(r, itens) {
     const porCampo = {};
@@ -1177,6 +1193,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         el("div", {}, el("span", { class: "sub" }, it.rotulo), el("span", {}, el("del", {}, it.trecho || "·"), " → ", el("ins", {}, it.sug)), el("span", { class: "sub" }, it.msg)),
         el("div", { style: "display:flex;gap:6px" },
           el("button", { class: "btn", type: "button", onclick: () => aplicarCorrecoes(r, [it]) }, "Aplicar"),
+          it.typo ? el("button", { class: "linkbtn", type: "button", title: "Guarda a palavra no dicionário do painel e não aponta mais", onclick: () => aceitarPalavra(it) }, "Sempre aceitar") : null,
           el("button", { class: "linkbtn", type: "button", onclick: () => { corr.itens = corr.itens.filter((x) => x !== it); render(); } }, "Ignorar"))))),
       el("div", { class: "sugg" }, "Revisão feita pelo LanguageTool. O texto do roteiro é enviado para o serviço só na hora em que você clica."));
   }
@@ -1223,7 +1240,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       el("div", { class: "sheet" }, el("table", { class: "sh rot" },
         el("thead", {}, el("tr", {}, el("th", { class: "rn" }, "#"), RCOLS.map(([k, n]) => el("th", { class: "sh-h t-" + k }, el("div", { style: "padding:10px" }, n))), el("th", { class: "addc" }))),
         el("tbody", {}, linhas),
-        el("tfoot", {}, el("tr", {}, el("td", { class: "rn" }), el("td", { colspan: "3", style: "padding:8px 10px;font-weight:800" }, "Total"), el("td", { class: "t-seg", style: "padding:8px 10px;font-weight:800" }, segTotal(r) + "s"), el("td", { colspan: "2" }))))),
+        el("tfoot", {}, el("tr", {}, el("td", { class: "rn" }), el("td", { colspan: "4", style: "padding:8px 10px;font-weight:800" }, "Total"), el("td", { class: "t-seg", style: "padding:8px 10px;font-weight:800" }, segTotal(r) + "s"), el("td", { colspan: "3" }))))),
       el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
         el("button", { class: "btn primary", type: "button", onclick: () => editRot(r.id, (x) => { x.cenas = (x.cenas || []).concat([novaCena()]); }, true) }, "+ Cena")),
       el("div", { style: "display:flex;justify-content:flex-end" }, el("button", { class: "linkbtn", type: "button", style: "color:var(--bad)", "data-label": "Apagar este roteiro", onclick: twoStep(async () => { try { await db.collection("roteiros").doc(r.id).delete(); state.roteiro = ""; render(); } catch (e) { fail(e); } }) }, "Apagar este roteiro"))];
@@ -1444,6 +1461,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("planilhas").onSnapshot((s) => { state.planilhas = listOf(s); render(); }, onErr);
     db.collection("links").onSnapshot((s) => { state.links = mapOf(s); render(); }, onErr);
     db.collection("roteiros").onSnapshot((s) => { state.roteiros = listOf(s); render(); }, onErr);
+    db.doc("config/dicionario").onSnapshot((s) => { state.dicio = s.exists ? s.data() : null; }, onErr);
   })();
 })();
 </script>
