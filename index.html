@@ -321,6 +321,13 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .corr-item > div:first-child { display: grid; gap: 2px; min-width: 0; }
 .corr-item del { color: var(--bad); }
 .corr-item ins { color: var(--ok); text-decoration: none; font-weight: 800; }
+/* Pedidos de roteiro */
+.ped-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px 16px; }
+.ped-campos .field.wide { grid-column: 1 / -1; }
+.ped-campos input { font-family: var(--font) !important; }
+.ped-campos .field.ok label { color: var(--ok); }
+.ped-campos .field.bad label { color: var(--bad); }
+.ped-prompt { font-family: var(--font-mono); font-size: 12.5px; min-height: 220px; background: var(--surface-2); }
 .login { max-width: 420px; margin: 40px auto; }
 .login input { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; font-size: 15px; }
 /* Links */
@@ -435,7 +442,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, aba: "estrategia", cli: "", mes: "" };
+  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -1274,16 +1281,109 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     setTimeout(() => window.print(), 50);
   }
 
+  /* ---------- Pedidos de roteiro (formulário que vira prompt) ---------- */
+  const PCAMPOS = [
+    ["marca", "Marca / Produto", 1, "Ex.: One Sec, app de bloqueio de tela"],
+    ["video", "Nome do vídeo (como vai ficar na planilha)", 1, "Ex.: One Sec (time)"],
+    ["briefing", "Briefing da marca", 6, "Cole aqui o texto do briefing ou o link do PDF/Drive"],
+    ["dos", "Do's (deve ter)", 3, "Um por linha. Ex.: olhar direto pra câmera; mostrar o app funcionando"],
+    ["donts", "Don'ts (não pode ter)", 3, "Um por linha. Ex.: não dizer que é gratuito"],
+    ["refs", "Referências", 5, "Links de vídeos (virais, concorrentes, edição) e o que você gostou em cada um"],
+    ["conexao", "Sua conexão real com a marca", 3, "Como você usa isso na sua vida? O que mudou pra você?"],
+    ["objetivo", "Objetivo do vídeo", 2, "Ex.: gerar downloads pelo link de indicação; portfólio UGC"],
+    ["publico", "Pra quem é", 2, "Ex.: quem trabalha no celular e se distrai com redes sociais"],
+    ["onde", "Onde vai ser postado", 2, "Ex.: perfil oficial, stories, TikTok, portfólio"],
+    ["estilo", "Estilo do vídeo que você quer", 3, "Ex.: frontal olhando pra câmera + B-roll na metade da tela; cenas tech"],
+    ["tempo", "Tempo (duração máxima)", 1, "Ex.: até 1 minuto"],
+    ["estrutura", "Estrutura do vídeo", 3, "Ex.: gancho → problema com lacuna → produto → benefícios → prova → CTA"],
+    ["cta", "Estilo de call to action", 2, "Ex.: comenta uma palavra e eu mando; link na bio; cupom"],
+    ["obs", "Outras observações", 2, "Roupa, cenário, equipamentos, prazo de entrega…"]
+  ];
+  const pedOf = (id) => state.pedidos.find((p) => p.id === id);
+  const pedTimer = {};
+  function editPed(id, campo, valor) {
+    const p = pedOf(id); if (!p) return;
+    p[campo] = valor;
+    clearTimeout(pedTimer[id]);
+    pedTimer[id] = setTimeout(async () => {
+      const body = Object.assign({}, pedOf(id)); delete body.id; body.editadoEm = new Date().toISOString();
+      try { await db.collection("pedidos").doc(id).set(body); flash($("#ped-saved")); } catch (e) { fail(e); }
+    }, 600);
+  }
+  async function novoPedido() {
+    const cli = state.cli || "luana-caper";
+    const doc = { cliente: cli, status: "rascunho", criadoEm: new Date().toISOString() };
+    PCAMPOS.forEach(([k]) => { doc[k] = ""; });
+    try { const ref = await db.collection("pedidos").add(doc); state.pedido = ref.id; state.roteiro = ""; go({ aba: "roteiros", cli }); } catch (e) { fail(e); }
+  }
+  function promptDoPedido(p) {
+    const partes = PCAMPOS.filter(([k]) => (p[k] || "").trim()).map(([k, n]) => "## " + n + "\n" + p[k].trim());
+    return "Use a skill roteiro-ugc (com o método criativo-bestseller e o meu tom de voz) pra criar o roteiro completo deste pedido, igual combinamos: todas as colunas preenchidas, 2 opções de gancho, português revisado, e no fim suba na Central, ligado ao vídeo na planilha Conteúdos, com o PDF em Downloads.\n\n"
+      + "Pedido de roteiro " + p.id + " · cliente: " + cliName(p.cliente) + "\n\n"
+      + partes.join("\n\n")
+      + "\n\nO que não estiver preenchido, decida pelo método ou me pergunte. Só a minha conexão com a marca você não pode inventar.";
+  }
+  function pedidoEditor(p) {
+    const saved = el("span", { class: "saved", id: "ped-saved", "aria-live": "polite" });
+    const campos = PCAMPOS.map(([k, n, linhas, dica]) => {
+      const id = "ped-" + p.id + "-" + k;
+      const ta = el(linhas === 1 ? "input" : "textarea", Object.assign({ id, placeholder: dica }, linhas === 1 ? {} : { rows: String(linhas) }));
+      ta.value = p[k] || "";
+      ta.addEventListener("input", () => editPed(p.id, k, ta.value));
+      return el("div", { class: "field" + (linhas >= 5 ? " wide" : "") + (k === "dos" ? " ok" : k === "donts" ? " bad" : "") }, el("label", { for: id }, n), ta);
+    });
+    const area = el("textarea", { id: "ped-prompt-" + p.id, class: "ped-prompt", readonly: true, rows: "10" });
+    area.value = promptDoPedido(p);
+    const copiado = el("span", { class: "saved", "aria-live": "polite" });
+    const copiar = async () => {
+      area.value = promptDoPedido(pedOf(p.id) || p);
+      try { await navigator.clipboard.writeText(area.value); copiado.textContent = "Copiado! Agora é só colar no chat com o Claude."; }
+      catch (e) { area.select(); copiado.textContent = "Selecionei o texto: aperte Ctrl+C."; }
+      if (p.status === "rascunho") editPed(p.id, "status", "prompt gerado");
+    };
+    const rot = p.roteiro && rotOf(p.roteiro);
+    return [
+      el("div", { class: "mhead" },
+        el("button", { class: "btn", type: "button", onclick: () => { state.pedido = ""; render(); } }, "← Roteiros e pedidos"),
+        el("div", { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, saved,
+          rot ? el("button", { class: "btn", type: "button", onclick: () => { state.pedido = ""; abrirRoteiro(rot); } }, "📝 Ver roteiro criado") : null)),
+      el("section", { class: "panel" },
+        el("div", { class: "sh-bar" }, el("h3", { style: "flex:1" }, "Pedido de roteiro" + (p.video || p.marca ? " · " + (p.video || p.marca) : "")),
+          el("span", { class: "chip " + (p.status === "roteiro criado" ? "st-4" : p.status === "prompt gerado" ? "st-1" : "st-0") }, p.status || "rascunho")),
+        el("div", { class: "sugg" }, "Preencha o que você já tem. O que ficar vazio eu decido pelo método ou te pergunto."),
+        el("div", { class: "ped-campos" }, campos)),
+      el("section", { class: "panel" },
+        el("div", { class: "mhead" }, el("h4", {}, "Prompt pronto"),
+          el("div", { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, copiado, el("button", { class: "btn primary", type: "button", onclick: copiar }, "Gerar e copiar prompt"))),
+        el("div", { class: "sugg" }, "Copie e cole no chat com o Claude. Ele cria o roteiro completo, sobe aqui na Central e marca este pedido como feito."),
+        area),
+      el("div", { style: "display:flex;justify-content:flex-end" }, el("button", { class: "linkbtn", type: "button", style: "color:var(--bad)", "data-label": "Apagar este pedido", onclick: twoStep(async () => { try { await db.collection("pedidos").doc(p.id).delete(); state.pedido = ""; render(); } catch (e) { fail(e); } }) }, "Apagar este pedido"))];
+  }
+  function listaPedidos(cli) {
+    const ps = state.pedidos.filter((p) => (!cli || p.cliente === cli) && p.status !== "roteiro criado").sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""));
+    return el("section", { class: "block" },
+      el("div", { class: "mhead" }, el("h2", {}, "Pedidos de roteiro"), el("button", { class: "btn primary", type: "button", onclick: novoPedido }, "+ Pedido de roteiro")),
+      ps.length ? el("div", { class: "lgrid" }, ps.map((p) => el("div", { class: "lcard rcard" },
+        el("button", { class: "lmain", type: "button", onclick: () => { state.pedido = p.id; render(); } },
+          el("span", { class: "lt" }, p.video || p.marca || "Pedido sem nome"),
+          el("span", { class: "ltags" }, cli ? null : el("span", { class: "chip" }, cliName(p.cliente)), el("span", { class: "chip " + (p.status === "prompt gerado" ? "st-1" : "st-0") }, p.status || "rascunho")),
+          el("span", { class: "lu" }, PCAMPOS.filter(([k]) => (p[k] || "").trim()).length + " de " + PCAMPOS.length + " campos preenchidos")))))
+        : el("div", { class: "sugg" }, "Comece um pedido: preencha briefing, referências e estilo, e gere o prompt pra mandar pro Claude."));
+  }
+
   function viewRoteiros() {
     const cli = state.cli;
+    if (state.pedido) { const pd = pedOf(state.pedido); if (pd) return pedidoEditor(pd); state.pedido = ""; }
     if (state.roteiro) { const r = rotOf(state.roteiro); if (r) return rotEditor(r); state.roteiro = ""; }
     state.rotSel = state.rotSel || {};
     const lista = state.roteiros.filter((r) => !cli || r.cliente === cli)
       .sort((a, b) => cliName(a.cliente).localeCompare(cliName(b.cliente), "pt-BR") || (a.criadoEm || "").localeCompare(b.criadoEm || ""));
     const sel = lista.filter((r) => state.rotSel[r.id]);
     const novo = cli ? el("button", { class: "btn", type: "button", onclick: () => criarRoteiro(cli, null, null) }, "+ Roteiro avulso") : null;
-    if (!lista.length) return [el("div", { class: "empty" }, cli ? "Nenhum roteiro de " + cliName(cli) + " ainda. Na planilha, clique em \"Criar roteiro\" na coluna Roteiro de um vídeo." : "Nenhum roteiro ainda. Na planilha, clique em \"Criar roteiro\" na coluna Roteiro de um vídeo."), novo ? el("div", {}, novo) : null];
+    if (!lista.length) return [listaPedidos(cli), el("div", { class: "empty" }, cli ? "Nenhum roteiro de " + cliName(cli) + " ainda. Na planilha, clique em \"Criar roteiro\" na coluna Roteiro de um vídeo." : "Nenhum roteiro ainda. Na planilha, clique em \"Criar roteiro\" na coluna Roteiro de um vídeo."), novo ? el("div", {}, novo) : null];
     return [
+      listaPedidos(cli),
+      el("h2", {}, "Roteiros"),
       el("div", { class: "mhead" },
         el("div", { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" },
           el("button", { class: "btn", type: "button", onclick: () => { const todos = sel.length !== lista.length; lista.forEach((r) => { state.rotSel[r.id] = todos; }); render(); } }, sel.length === lista.length ? "Desmarcar todos" : "Selecionar todos"),
@@ -1467,6 +1567,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("planilhas").onSnapshot((s) => { state.planilhas = listOf(s); render(); }, onErr);
     db.collection("links").onSnapshot((s) => { state.links = mapOf(s); render(); }, onErr);
     db.collection("roteiros").onSnapshot((s) => { state.roteiros = listOf(s); render(); }, onErr);
+    db.collection("pedidos").onSnapshot((s) => { state.pedidos = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ped-"))) render(); }, onErr);
     db.doc("config/dicionario").onSnapshot((s) => { state.dicio = s.exists ? s.data() : null; }, onErr);
   })();
 })();
