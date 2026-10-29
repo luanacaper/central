@@ -264,6 +264,44 @@ body.wide .mhead .ptitle h1 { font-size: 22px; }
 .tmeta input.cell:focus, .tmeta select.cell:focus { background: var(--bg); border-color: var(--mint); outline: none; }
 input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: var(--font); }
 .tmeta input.cell-nota { font-size: 12px; color: var(--muted); padding-top: 0; }
+/* Roteiros */
+.rotbtn { flex: none; margin: 6px 0 6px 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 800; color: var(--mint); white-space: nowrap; }
+.rotbtn.tem { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+.sh td.t-link .lnk { min-width: 260px; }
+.rot-head { gap: 12px; }
+.rot-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px 14px; }
+.rot-campos textarea { min-height: 56px; }
+.sh.rot td.t-fala textarea { min-width: 320px; font-weight: 600; }
+.sh.rot td.t-cenario textarea, .sh.rot td.t-look textarea { min-width: 200px; }
+.sh.rot td.t-take textarea { min-width: 140px; }
+.sh.rot td.t-seg input { width: 80px; text-align: right; font-family: var(--font-mono); }
+.sh.rot .rctl { white-space: nowrap; padding: 6px; vertical-align: middle; background: transparent; }
+.sh.rot tfoot td { border-bottom: 0; background: var(--surface-2); }
+.rcard { display: flex; align-items: stretch; }
+.rcard .lmain { flex: 1; text-align: left; background: none; border: 0; font: inherit; cursor: pointer; padding-right: 16px; }
+.rcard .rsel { display: grid; place-items: center; padding: 0 0 0 14px; }
+.rcard .rsel input { width: 18px; height: 18px; accent-color: var(--mint); }
+.rcard.on { border-color: var(--mint); box-shadow: inset 0 0 0 1px var(--mint); }
+#print-area { display: none; }
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  body { background: #fff !important; color: #000 !important; }
+  .app, .notice { display: none !important; }
+  #print-area { display: block !important; }
+  .rot-print { page-break-after: always; break-after: page; font-family: var(--font); font-size: 11pt; color: #000; }
+  .rot-print:last-child { page-break-after: auto; break-after: auto; }
+  .rot-print header { display: flex; justify-content: space-between; align-items: end; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
+  .rot-print header small { font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; }
+  .rot-print h2 { font-size: 18pt; margin: 2px 0 0; color: #000; text-transform: none; letter-spacing: 0; }
+  .rot-print dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; margin: 0 0 10px; }
+  .rot-print dt { font-size: 8pt; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+  .rot-print dd { margin: 0; white-space: pre-wrap; }
+  .rot-print table { width: 100%; border-collapse: collapse; }
+  .rot-print th, .rot-print td { border: 1px solid #555; padding: 5px 6px; text-align: left; vertical-align: top; white-space: pre-wrap; }
+  .rot-print th { background: #eee; font-size: 9pt; text-transform: uppercase; }
+  .rot-print td:first-child { width: 22px; text-align: center; }
+  .rot-print td:nth-child(2) { width: 38%; }
+}
 .login { max-width: 420px; margin: 40px auto; }
 .login input { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; font-size: 15px; }
 /* Links */
@@ -359,8 +397,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
 
 <script>
 (function () {
-  const ABAS = [["estrategia", "Estratégia"], ["trafego", "Gestão de tráfego"], ["creators", "Gestão de creators"], ["conteudo", "Criação de conteúdo"], ["gravacao", "Gravação"], ["planilhas", "Planilhas"], ["links", "Links"]];
-  const CURTO = { estrategia: "Estratégia", trafego: "Tráfego", creators: "Creators", conteudo: "Conteúdo", gravacao: "Gravação", planilhas: "Planilhas", links: "Links" };
+  const ABAS = [["estrategia", "Estratégia"], ["trafego", "Gestão de tráfego"], ["creators", "Gestão de creators"], ["conteudo", "Criação de conteúdo"], ["gravacao", "Gravação"], ["planilhas", "Planilhas"], ["links", "Links"], ["roteiros", "Roteiros"]];
+  const CURTO = { estrategia: "Estratégia", trafego: "Tráfego", creators: "Creators", conteudo: "Conteúdo", gravacao: "Gravação", planilhas: "Planilhas", links: "Links", roteiros: "Roteiros" };
   const ICONS = {
     estrategia: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',
     trafego: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
@@ -369,6 +407,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     gravacao: '<rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3z"/>',
     planilhas: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M3 15h18M9 4v16"/>',
     links: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    roteiros: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 12h6M10 16h6"/>',
     todos: '<path d="M4 6h16M4 12h16M4 18h10"/>'
   };
   const icon = (k) => { const n = document.createElementNS("http://www.w3.org/2000/svg", "svg"); n.setAttribute("viewBox", "0 0 24 24"); n.setAttribute("class", "i"); n.setAttribute("aria-hidden", "true"); n.innerHTML = ICONS[k] || ""; return n; };
@@ -377,7 +416,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", aba: "estrategia", cli: "", mes: "" };
+  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -894,7 +933,9 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     }
     if (c.tipo === "link") {
       const inp = el("input", { id, type: "url", value: val, placeholder: "colar link", "aria-label": c.nome, oninput: (e) => set(e.target.value) });
-      return el("div", { class: "lnk" }, inp, /^https?:\/\//.test(val) ? el("a", { href: val, target: "_blank", rel: "noopener", title: "Abrir link" }, "↗") : null);
+      const rot = /roteiro/i.test(c.nome) ? rotDaLinha(p.id, r.id) : null;
+      const rotBtn = /roteiro/i.test(c.nome) ? el("button", { class: "rotbtn" + (rot ? " tem" : ""), type: "button", title: rot ? "Abrir o roteiro deste vídeo" : "Criar o roteiro deste vídeo", onclick: () => rot ? abrirRoteiro(rot) : criarRoteiro(p.cliente, p, r) }, rot ? "📝 Abrir roteiro" : "+ Criar roteiro") : null;
+      return el("div", { class: "lnk" }, rotBtn, inp, /^https?:\/\//.test(val) ? el("a", { href: val, target: "_blank", rel: "noopener", title: "Abrir link" }, "↗") : null);
     }
     const ta = el("textarea", { id, rows: "1", "aria-label": c.nome, oninput: (e) => set(e.target.value) });
     ta.value = val;
@@ -1029,6 +1070,140 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       lista.length ? null : el("div", { class: "empty" }, "Nenhum link de " + cliName(cli) + " ainda."),
       ...grupos.map(([k, ls]) => el("section", { class: "block" }, el("h2", {}, { painel: "Painéis", criadores: "Criadores", lp: "Landing pages", trafego: "Tráfego", calendario: "Calendários", site: "Sites", ferramenta: "Ferramentas", outros: "Outros" }[k]),
         el("div", { class: "lgrid" }, ls.map((l) => linkCard(cli, l, true)))))];
+  }
+
+  /* ---------- Roteiros ---------- */
+  const RCAMPOS = [["marca", "Marca / Produto"], ["roupa", "Roupa principal"], ["estilo", "Estilo de vídeo"], ["equip", "Equipamentos e composição"]];
+  const RCOLS = [["fala", "Fala"], ["cenario", "Cenário"], ["take", "Take (cenas)"], ["seg", "Segundos"], ["look", "Look específico por cena"]];
+  const rotLocal = {}; const rotTimer = {};
+  const rotOf = (id) => rotLocal[id] || state.roteiros.find((r) => r.id === id);
+  const podeImprimir = /negocioscreators\.com$/.test(location.hostname);
+  function editRot(id, mut, structural) {
+    const cur = JSON.parse(JSON.stringify(rotOf(id)));
+    mut(cur); rotLocal[id] = cur;
+    clearTimeout(rotTimer[id]);
+    const save = async () => {
+      const r = rotLocal[id]; if (!r) return;
+      const body = Object.assign({}, r); delete body.id; body.editadoEm = new Date().toISOString();
+      try { await db.collection("roteiros").doc(id).set(body); flash($("#rot-saved")); }
+      catch (e) { fail(e); }
+      finally { if (rotLocal[id] === r) delete rotLocal[id]; }
+    };
+    if (structural) { save(); render(); } else rotTimer[id] = setTimeout(save, 600);
+  }
+  const rotDaLinha = (pid, rid) => state.roteiros.find((r) => r.planilha === pid && r.linha === rid);
+  function tituloRot(r) {
+    if (r.planilha && r.linha) {
+      const p = sheetOf(r.planilha); const row = p && (p.linhas || []).find((x) => x.id === r.linha);
+      const c = p && (p.colunas || []).find((x) => x.tipo === "texto");
+      const t = row && c && (row.v || {})[c.id];
+      if (t) return t;
+    }
+    return r.titulo || "Roteiro sem nome";
+  }
+  const novaCena = () => ({ id: "s" + uid(), fala: "", cenario: "", take: "", seg: "", look: "" });
+  async function criarRoteiro(cli, p, row) {
+    const c = p && (p.colunas || []).find((x) => x.tipo === "texto");
+    const doc = { cliente: cli, planilha: p ? p.id : "", linha: row ? row.id : "", titulo: row && c ? ((row.v || {})[c.id] || "") : "Novo roteiro",
+      marca: "", roupa: "", estilo: "", equip: "", cenas: [novaCena(), novaCena(), novaCena()], criadoEm: new Date().toISOString() };
+    try { const ref = await db.collection("roteiros").add(doc); state.roteiro = ref.id; go({ aba: "roteiros", cli }); } catch (e) { fail(e); }
+  }
+  const abrirRoteiro = (r) => { state.roteiro = r.id; go({ aba: "roteiros", cli: r.cliente }); };
+  const segTotal = (r) => (r.cenas || []).reduce((s, c) => s + (numDot(c.seg) || 0), 0);
+  const statusDoRot = (r) => { const p = r.planilha && sheetOf(r.planilha); const row = p && (p.linhas || []).find((x) => x.id === r.linha); return row ? statusOf(p, row) : null; };
+
+  function rotEditor(r) {
+    const saved = el("span", { class: "saved", id: "rot-saved", "aria-live": "polite" });
+    const vinc = r.planilha && r.linha;
+    const titulo = vinc ? el("h3", {}, tituloRot(r))
+      : el("input", { class: "sh-title", id: "rot-t-" + r.id, value: r.titulo || "", placeholder: "Nome do vídeo", "aria-label": "Nome do roteiro", oninput: (e) => editRot(r.id, (x) => { x.titulo = e.target.value; }) });
+    const st = statusDoRot(r);
+    const campos = RCAMPOS.map(([k, n]) => {
+      const id = "rot-" + r.id + "-" + k;
+      const ta = el("textarea", { id, rows: "2", oninput: (e) => editRot(r.id, (x) => { x[k] = e.target.value; }) }); ta.value = r[k] || "";
+      return el("div", { class: "field" }, el("label", { for: id }, n), ta);
+    });
+    const cenas = r.cenas || [];
+    const mover = (i, d) => editRot(r.id, (x) => { const j = i + d; if (j < 0 || j >= x.cenas.length) return; [x.cenas[i], x.cenas[j]] = [x.cenas[j], x.cenas[i]]; }, true);
+    const linhas = cenas.map((c, i) => el("tr", {},
+      el("td", { class: "rn" }, el("span", {}, i + 1)),
+      RCOLS.map(([k, n]) => {
+        const id = "rc-" + r.id + "-" + c.id + "-" + k;
+        const set = (v) => editRot(r.id, (x) => { const cc = x.cenas.find((y) => y.id === c.id); if (cc) cc[k] = v; });
+        if (k === "seg") return el("td", { class: "t-seg" }, el("input", { id, inputmode: "decimal", value: c.seg || "", placeholder: "0", "aria-label": n + " da cena " + (i + 1), oninput: (e) => set(e.target.value) }));
+        const ta = el("textarea", { id, rows: "1", "aria-label": n + " da cena " + (i + 1), oninput: (e) => set(e.target.value) }); ta.value = c[k] || "";
+        return el("td", { class: "t-" + k }, ta);
+      }),
+      el("td", { class: "rctl" },
+        el("button", { class: "x", type: "button", title: "Subir cena", "aria-label": "Subir cena " + (i + 1), onclick: () => mover(i, -1) }, "↑"),
+        el("button", { class: "x", type: "button", title: "Descer cena", "aria-label": "Descer cena " + (i + 1), onclick: () => mover(i, 1) }, "↓"),
+        el("button", { class: "x", type: "button", title: "Apagar cena (clique 2 vezes)", "aria-label": "Apagar cena " + (i + 1), onclick: twoStep(() => editRot(r.id, (x) => { x.cenas = x.cenas.filter((y) => y.id !== c.id); }, true)) }, "×"))));
+    return [
+      el("div", { class: "mhead" },
+        el("button", { class: "btn", type: "button", onclick: () => { state.roteiro = ""; render(); } }, "← Todos os roteiros"),
+        el("div", { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, saved,
+          el("button", { class: "btn primary", type: "button", onclick: () => imprimir([r.id]) }, "Imprimir"))),
+      el("section", { class: "panel rot-head" },
+        el("div", { class: "sh-bar" }, el("div", { style: "flex:1;min-width:220px" }, titulo),
+          st ? el("span", { class: "chip " + STATUS_CLS[st] }, st) : null,
+          el("span", { class: "chip" }, cenas.length + " cena" + (cenas.length === 1 ? "" : "s") + " · " + segTotal(r) + "s")),
+        vinc ? el("div", { class: "sugg" }, "Ligado ao vídeo da planilha. ", el("button", { class: "linkbtn", type: "button", onclick: () => { state.sheet = r.planilha; go({ aba: "planilhas", cli: r.cliente }); } }, "Ver na planilha")) : null,
+        el("div", { class: "rot-campos" }, campos)),
+      el("div", { class: "sheet" }, el("table", { class: "sh rot" },
+        el("thead", {}, el("tr", {}, el("th", { class: "rn" }, "#"), RCOLS.map(([k, n]) => el("th", { class: "sh-h t-" + k }, el("div", { style: "padding:10px" }, n))), el("th", { class: "addc" }))),
+        el("tbody", {}, linhas),
+        el("tfoot", {}, el("tr", {}, el("td", { class: "rn" }), el("td", { colspan: "3", style: "padding:8px 10px;font-weight:800" }, "Total"), el("td", { class: "t-seg", style: "padding:8px 10px;font-weight:800" }, segTotal(r) + "s"), el("td", { colspan: "2" }))))),
+      el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
+        el("button", { class: "btn primary", type: "button", onclick: () => editRot(r.id, (x) => { x.cenas = (x.cenas || []).concat([novaCena()]); }, true) }, "+ Cena")),
+      el("div", { style: "display:flex;justify-content:flex-end" }, el("button", { class: "linkbtn", type: "button", style: "color:var(--bad)", "data-label": "Apagar este roteiro", onclick: twoStep(async () => { try { await db.collection("roteiros").doc(r.id).delete(); state.roteiro = ""; render(); } catch (e) { fail(e); } }) }, "Apagar este roteiro"))];
+  }
+
+  function printNode(r) {
+    const esc = (t) => t || "";
+    return el("article", { class: "rot-print" },
+      el("header", {}, el("div", {}, el("small", {}, cliName(r.cliente)), el("h2", {}, tituloRot(r))), el("div", { class: "pmeta" }, (r.cenas || []).length + " cenas · " + segTotal(r) + "s")),
+      el("dl", {}, RCAMPOS.map(([k, n]) => [el("dt", {}, n), el("dd", {}, esc(r[k]) || "—")])),
+      el("table", {}, el("thead", {}, el("tr", {}, el("th", {}, "#"), RCOLS.map(([, n]) => el("th", {}, n)))),
+        el("tbody", {}, (r.cenas || []).map((c, i) => el("tr", {}, el("td", {}, i + 1), RCOLS.map(([k]) => el("td", {}, esc(c[k]))))))));
+  }
+  function imprimir(ids) {
+    const rs = ids.map(rotOf).filter(Boolean);
+    if (!rs.length) return;
+    if (!podeImprimir) {
+      const n = $("#notice"); n.hidden = false;
+      n.textContent = "Para imprimir, abra o painel em painel.negocioscreators.com/central. Dentro do claude.ai a impressão é bloqueada.";
+      return;
+    }
+    let area = $("#print-area");
+    if (!area) { area = el("div", { id: "print-area" }); document.body.append(area); }
+    area.replaceChildren(...rs.map(printNode));
+    setTimeout(() => window.print(), 50);
+  }
+
+  function viewRoteiros() {
+    const cli = state.cli;
+    if (state.roteiro) { const r = rotOf(state.roteiro); if (r) return rotEditor(r); state.roteiro = ""; }
+    state.rotSel = state.rotSel || {};
+    const lista = state.roteiros.filter((r) => !cli || r.cliente === cli)
+      .sort((a, b) => cliName(a.cliente).localeCompare(cliName(b.cliente), "pt-BR") || (a.criadoEm || "").localeCompare(b.criadoEm || ""));
+    const sel = lista.filter((r) => state.rotSel[r.id]);
+    const novo = cli ? el("button", { class: "btn", type: "button", onclick: () => criarRoteiro(cli, null, null) }, "+ Roteiro avulso") : null;
+    if (!lista.length) return [el("div", { class: "empty" }, cli ? "Nenhum roteiro de " + cliName(cli) + " ainda. Na planilha, clique em \"Criar roteiro\" na coluna Roteiro de um vídeo." : "Nenhum roteiro ainda. Na planilha, clique em \"Criar roteiro\" na coluna Roteiro de um vídeo."), novo ? el("div", {}, novo) : null];
+    return [
+      el("div", { class: "mhead" },
+        el("div", { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" },
+          el("button", { class: "btn", type: "button", onclick: () => { const todos = sel.length !== lista.length; lista.forEach((r) => { state.rotSel[r.id] = todos; }); render(); } }, sel.length === lista.length ? "Desmarcar todos" : "Selecionar todos"),
+          el("button", { class: "btn primary", type: "button", disabled: !sel.length, onclick: () => imprimir(sel.map((r) => r.id)) }, "Imprimir selecionados" + (sel.length ? " (" + sel.length + ")" : ""))),
+        novo),
+      el("div", { class: "lgrid" }, lista.map((r) => {
+        const st = statusDoRot(r); const cid = "rs-" + r.id;
+        return el("div", { class: "lcard rcard" + (state.rotSel[r.id] ? " on" : "") },
+          el("label", { class: "rsel", for: cid, title: "Selecionar para imprimir" }, el("input", { type: "checkbox", id: cid, checked: !!state.rotSel[r.id], onchange: (e) => { state.rotSel[r.id] = e.target.checked; render(); } })),
+          el("button", { class: "lmain", type: "button", onclick: () => abrirRoteiro(r) },
+            el("span", { class: "lt" }, tituloRot(r)),
+            el("span", { class: "ltags" }, cli ? null : el("span", { class: "chip" }, cliName(r.cliente)), st ? el("span", { class: "chip " + STATUS_CLS[st] }, st) : null),
+            el("span", { class: "lu" }, (r.marca ? r.marca + " · " : "") + (r.cenas || []).length + " cenas · " + segTotal(r) + "s")));
+      }))];
   }
 
   /* ---------- Banco no Supabase (mesma interface do banco antigo do artifact) ---------- */
@@ -1170,7 +1345,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     renderNav(); renderSide(); renderGoal();
     const aba = state.aba; const titulo = (ABAS.find(([k]) => k === aba) || [])[1];
     const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
-    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : viewArea(aba);
+    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : viewArea(aba);
     document.body.classList.toggle("wide", !!state.wide && aba === "planilhas" && !!state.cli);
     keepFocus(() => $("#main").replaceChildren(head, ...body.filter(Boolean)));
   }
@@ -1196,6 +1371,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("metasnc").onSnapshot((s) => { state.metasNc = mapOf(s); render(); }, onErr);
     db.collection("planilhas").onSnapshot((s) => { state.planilhas = listOf(s); render(); }, onErr);
     db.collection("links").onSnapshot((s) => { state.links = mapOf(s); render(); }, onErr);
+    db.collection("roteiros").onSnapshot((s) => { state.roteiros = listOf(s); render(); }, onErr);
   })();
 })();
 </script>
