@@ -304,6 +304,14 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
   .rot-print td:nth-child(2) { width: 30%; }
   .rot-print td:nth-child(3) { width: 18%; font-style: italic; }
 }
+/* Corretor */
+.corr { gap: 10px; border-color: var(--warn); }
+.corr.ok { border-color: var(--ok); flex-direction: row; display: flex; justify-content: space-between; align-items: center; }
+.corr-list { display: grid; gap: 8px; max-height: 320px; overflow: auto; }
+.corr-item { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.corr-item > div:first-child { display: grid; gap: 2px; min-width: 0; }
+.corr-item del { color: var(--bad); }
+.corr-item ins { color: var(--ok); text-decoration: none; font-weight: 800; }
 .login { max-width: 420px; margin: 40px auto; }
 .login input { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; font-size: 15px; }
 /* Links */
@@ -373,7 +381,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   </defs>
 </svg>
 
-<div class="app">
+<div class="app" lang="pt-BR">
   <aside class="rail" aria-label="Negócios Creators">
     <div class="logo">
       <svg viewBox="0 -1082 3389 1084" style="color:#F4F5F2" role="img" aria-label="nc"><defs><clipPath id="ncclip1"><circle cx="2768.0" cy="-270.0" r="270.0"/></clipPath></defs><path fill="currentColor" d="M876 0V-510Q876 -547 872.0 -604.5Q868 -662 847.0 -720.0Q826 -778 778.5 -817.0Q731 -856 644 -856Q609 -856 569.0 -845.0Q529 -834 494.0 -802.5Q459 -771 436.5 -710.0Q414 -649 414 -548L258 -622Q258 -750 310.0 -862.0Q362 -974 466.5 -1043.0Q571 -1112 730 -1112Q857 -1112 937.0 -1069.0Q1017 -1026 1061.5 -960.0Q1106 -894 1125.0 -822.5Q1144 -751 1148.0 -692.0Q1152 -633 1152 -606V0ZM138 0V-1080H380V-722H414V0Z M1808.0 30Q1640.0 30 1520.0 -45.0Q1400.0 -120 1336.0 -249.0Q1272.0 -378 1272.0 -540Q1272.0 -704 1338.5 -833.0Q1405.0 -962 1526.0 -1036.0Q1647.0 -1110 1812.0 -1110Q2003.0 -1110 2132.5 -1013.5Q2262.0 -917 2298.0 -750L2026.0 -678Q2002.0 -762 1942.5 -809.0Q1883.0 -856 1808.0 -856Q1722.0 -856 1667.0 -814.5Q1612.0 -773 1586.0 -701.5Q1560.0 -630 1560.0 -540Q1560.0 -399 1622.5 -311.5Q1685.0 -224 1808.0 -224Q1900.0 -224 1948.0 -266.0Q1996.0 -308 2020.0 -386L2298.0 -328Q2252.0 -156 2124.0 -63.0Q1996.0 30 1808.0 30Z"/><circle cx="2768.0" cy="-270.0" r="270.0" fill="#3EDDB0"/><circle cx="3119.0" cy="-270.0" r="270.0" fill="#FF8F4A"/><circle cx="3119.0" cy="-270.0" r="270.0" fill="#FFF3E6" clip-path="url(#ncclip1)"/></svg>
@@ -1114,6 +1122,65 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const segTotal = (r) => (r.cenas || []).reduce((s, c) => s + (numDot(c.seg) || 0), 0);
   const statusDoRot = (r) => { const p = r.planilha && sheetOf(r.planilha); const row = p && (p.linhas || []).find((x) => x.id === r.linha); return row ? statusOf(p, row) : null; };
 
+  /* ---------- Corretor de português (LanguageTool) ---------- */
+  const corr = { id: "", carregando: false, itens: null, erro: "" };
+  function textosDoRot(r) {
+    const seg = [];
+    RCAMPOS.forEach(([k, n]) => { if ((r[k] || "").trim()) seg.push({ key: k, rotulo: n, txt: r[k] }); });
+    (r.cenas || []).forEach((c, i) => RCOLS.forEach(([k, n]) => { if (k !== "seg" && (c[k] || "").trim()) seg.push({ key: "c:" + c.id + ":" + k, rotulo: "Cena " + (i + 1) + " · " + n, txt: c[k] }); }));
+    return seg;
+  }
+  async function corrigir(r) {
+    corr.id = r.id; corr.carregando = true; corr.itens = null; corr.erro = ""; render();
+    const seg = textosDoRot(r);
+    let pos = 0; const partes = [];
+    seg.forEach((s) => { s.ini = pos; partes.push(s.txt); pos += s.txt.length + 2; });
+    try {
+      const body = new URLSearchParams({ text: partes.join("\n\n"), language: "pt-BR", level: "picky" });
+      const resp = await fetch("https://api.languagetool.org/v2/check", { method: "POST", body });
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      const j = await resp.json();
+      corr.itens = (j.matches || []).map((m) => {
+        const s = seg.find((x) => m.offset >= x.ini && m.offset < x.ini + x.txt.length);
+        if (!s || !(m.replacements || []).length) return null;
+        const off = m.offset - s.ini;
+        return { key: s.key, rotulo: s.rotulo, off, len: m.length, trecho: s.txt.substr(off, m.length), sug: m.replacements[0].value, msg: m.message, ctx: s.txt };
+      }).filter(Boolean);
+    } catch (e) { corr.erro = "Não deu para revisar agora (" + (e.message || e) + "). Tente de novo em um minuto."; }
+    corr.carregando = false; render();
+  }
+  function aplicarCorrecoes(r, itens) {
+    const porCampo = {};
+    itens.forEach((it) => { (porCampo[it.key] = porCampo[it.key] || []).push(it); });
+    editRot(r.id, (x) => {
+      Object.entries(porCampo).forEach(([key, its]) => {
+        its.sort((a, b) => b.off - a.off);
+        const troca = (t) => its.reduce((acc, it) => acc.substr(it.off, it.len) === it.trecho ? acc.slice(0, it.off) + it.sug + acc.slice(it.off + it.len) : acc, t || "");
+        if (key.startsWith("c:")) { const [, cid, campo] = key.split(":"); const c = x.cenas.find((y) => y.id === cid); if (c) c[campo] = troca(c[campo]); }
+        else x[key] = troca(x[key]);
+      });
+    }, true);
+    corr.itens = corr.itens.filter((it) => !itens.includes(it));
+    // os trechos depois da troca mudam de posição: revisa de novo o que sobrou
+    if (corr.itens.length) setTimeout(() => corrigir(rotOf(r.id)), 800);
+  }
+  function corretorNode(r) {
+    if (corr.id !== r.id || (!corr.carregando && corr.itens === null && !corr.erro)) return null;
+    const fechar = el("button", { class: "linkbtn", type: "button", onclick: () => { corr.id = ""; corr.itens = null; corr.erro = ""; render(); } }, "Fechar");
+    if (corr.carregando) return el("section", { class: "panel corr" }, el("div", { class: "sugg" }, "Revisando o português do roteiro…"));
+    if (corr.erro) return el("section", { class: "panel corr" }, el("div", { class: "sugg" }, corr.erro), fechar);
+    if (!corr.itens.length) return el("section", { class: "panel corr ok" }, el("b", {}, "✓ Nenhum erro de português encontrado."), fechar);
+    return el("section", { class: "panel corr" },
+      el("div", { class: "mhead" }, el("h4", {}, corr.itens.length + " sugest" + (corr.itens.length === 1 ? "ão" : "ões") + " de correção"),
+        el("div", { style: "display:flex;gap:8px;align-items:center" }, el("button", { class: "btn primary", type: "button", onclick: () => aplicarCorrecoes(r, corr.itens.slice()) }, "Aplicar todas"), fechar)),
+      el("div", { class: "corr-list" }, corr.itens.map((it) => el("div", { class: "corr-item" },
+        el("div", {}, el("span", { class: "sub" }, it.rotulo), el("span", {}, el("del", {}, it.trecho || "·"), " → ", el("ins", {}, it.sug)), el("span", { class: "sub" }, it.msg)),
+        el("div", { style: "display:flex;gap:6px" },
+          el("button", { class: "btn", type: "button", onclick: () => aplicarCorrecoes(r, [it]) }, "Aplicar"),
+          el("button", { class: "linkbtn", type: "button", onclick: () => { corr.itens = corr.itens.filter((x) => x !== it); render(); } }, "Ignorar"))))),
+      el("div", { class: "sugg" }, "Revisão feita pelo LanguageTool. O texto do roteiro é enviado para o serviço só na hora em que você clica."));
+  }
+
   function rotEditor(r) {
     const saved = el("span", { class: "saved", id: "rot-saved", "aria-live": "polite" });
     const vinc = r.planilha && r.linha;
@@ -1144,7 +1211,9 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       el("div", { class: "mhead" },
         el("button", { class: "btn", type: "button", onclick: () => { state.roteiro = ""; render(); } }, "← Todos os roteiros"),
         el("div", { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, saved,
+          el("button", { class: "btn", type: "button", disabled: corr.carregando, onclick: () => corrigir(r) }, "✓ Corrigir português"),
           el("button", { class: "btn primary", type: "button", onclick: () => imprimir([r.id]) }, "Imprimir"))),
+      corretorNode(r),
       el("section", { class: "panel rot-head" },
         el("div", { class: "sh-bar" }, el("div", { style: "flex:1;min-width:220px" }, titulo),
           st ? el("span", { class: "chip " + STATUS_CLS[st] }, st) : null,
@@ -1350,6 +1419,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : viewArea(aba);
     document.body.classList.toggle("wide", !!state.wide && aba === "planilhas" && !!state.cli);
     keepFocus(() => $("#main").replaceChildren(head, ...body.filter(Boolean)));
+    document.querySelectorAll("textarea, input:not([type]), input[type=text]").forEach((e) => { e.spellcheck = true; e.lang = "pt-BR"; });
   }
   renderNav();
   if (window.matchMedia) { const mq = window.matchMedia("(max-width: 860px)"); if (mq.addEventListener) mq.addEventListener("change", renderNav); }
