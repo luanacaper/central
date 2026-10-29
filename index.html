@@ -271,6 +271,8 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .rot-head { gap: 12px; }
 .rot-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px 14px; }
 .rot-campos textarea { min-height: 56px; }
+.rot-campos .field:nth-last-child(2) label { color: var(--ok); }
+.rot-campos .field:last-child label { color: var(--bad); }
 .sh.rot td.t-fala textarea { min-width: 320px; font-weight: 600; }
 .sh.rot td.t-cenario textarea, .sh.rot td.t-look textarea { min-width: 200px; }
 .sh.rot td.t-legenda textarea { min-width: 220px; font-style: italic; }
@@ -297,7 +299,7 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
   .rot-print header { display: flex; justify-content: space-between; align-items: end; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
   .rot-print header small { font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; }
   .rot-print h2 { font-size: 18pt; margin: 2px 0 0; color: #000; text-transform: none; letter-spacing: 0; }
-  .rot-print dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; margin: 0 0 10px; }
+  .rot-print dl { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px 14px; margin: 0 0 10px; }
   .rot-print dt { font-size: 8pt; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
   .rot-print dd { margin: 0; white-space: pre-wrap; }
   .rot-print table { width: 100%; border-collapse: collapse; }
@@ -1090,7 +1092,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   }
 
   /* ---------- Roteiros ---------- */
-  const RCAMPOS = [["marca", "Marca / Produto"], ["roupa", "Roupa principal"], ["estilo", "Estilo de vídeo"], ["equip", "Equipamentos e composição"]];
+  const RCAMPOS = [["marca", "Marca / Produto"], ["roupa", "Roupa principal"], ["estilo", "Estilo de vídeo"], ["equip", "Equipamentos e composição"], ["dos", "Do's (deve ter)"], ["donts", "Don'ts (não pode ter)"]];
   const RCOLS = [["fala", "Fala"], ["legenda", "Legenda na tela"], ["cenario", "Cenário"], ["take", "Take (cenas)"], ["broll", "B-roll"], ["seg", "Segundos"], ["look", "Look específico por cena"], ["edicao", "Descrição técnica de edição"], ["sfx", "Efeitos sonoros"], ["trilha", "Trilha sonora"]];
   const rotLocal = {}; const rotTimer = {};
   const rotOf = (id) => rotLocal[id] || state.roteiros.find((r) => r.id === id);
@@ -1122,7 +1124,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   async function criarRoteiro(cli, p, row) {
     const c = p && (p.colunas || []).find((x) => x.tipo === "texto");
     const doc = { cliente: cli, planilha: p ? p.id : "", linha: row ? row.id : "", titulo: row && c ? ((row.v || {})[c.id] || "") : "Novo roteiro",
-      marca: "", roupa: "", estilo: "", equip: "", cenas: [novaCena(), novaCena(), novaCena()], criadoEm: new Date().toISOString() };
+      marca: "", roupa: "", estilo: "", equip: "", dos: "", donts: "", cenas: [novaCena(), novaCena(), novaCena()], criadoEm: new Date().toISOString() };
     try { const ref = await db.collection("roteiros").add(doc); state.roteiro = ref.id; go({ aba: "roteiros", cli }); } catch (e) { fail(e); }
   }
   const abrirRoteiro = (r) => { state.roteiro = r.id; go({ aba: "roteiros", cli: r.cliente }); };
