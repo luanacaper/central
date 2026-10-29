@@ -276,6 +276,7 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .sh.rot td.t-legenda textarea { min-width: 220px; font-style: italic; }
 .sh.rot td.t-edicao textarea { min-width: 240px; }
 .sh.rot td.t-broll textarea { min-width: 200px; }
+.sh.rot td.t-sfx textarea, .sh.rot td.t-trilha textarea { min-width: 180px; }
 .sh.rot td.t-take textarea { min-width: 140px; }
 .sh.rot td.t-seg input { width: 80px; text-align: right; font-family: var(--font-mono); }
 .sh.rot .rctl { white-space: nowrap; padding: 6px; vertical-align: middle; background: transparent; }
@@ -306,8 +307,9 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
   .rot-print { font-size: 10pt; }
   .rot-print td:nth-child(2) { width: 26%; }
   .rot-print td:nth-child(3) { width: 15%; font-style: italic; }
-  .rot-print { font-size: 9.5pt; }
-  .rot-print td:nth-child(9) { width: 14%; }
+  .rot-print { font-size: 8.5pt; }
+  .rot-print td:nth-child(2) { width: 22%; }
+  .rot-print td:nth-child(9) { width: 12%; }
 }
 /* Corretor */
 .corr { gap: 10px; border-color: var(--warn); }
@@ -1089,7 +1091,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
 
   /* ---------- Roteiros ---------- */
   const RCAMPOS = [["marca", "Marca / Produto"], ["roupa", "Roupa principal"], ["estilo", "Estilo de vídeo"], ["equip", "Equipamentos e composição"]];
-  const RCOLS = [["fala", "Fala"], ["legenda", "Legenda na tela"], ["cenario", "Cenário"], ["take", "Take (cenas)"], ["broll", "B-roll"], ["seg", "Segundos"], ["look", "Look específico por cena"], ["edicao", "Descrição técnica de edição"]];
+  const RCOLS = [["fala", "Fala"], ["legenda", "Legenda na tela"], ["cenario", "Cenário"], ["take", "Take (cenas)"], ["broll", "B-roll"], ["seg", "Segundos"], ["look", "Look específico por cena"], ["edicao", "Descrição técnica de edição"], ["sfx", "Efeitos sonoros"], ["trilha", "Trilha sonora"]];
   const rotLocal = {}; const rotTimer = {};
   const rotOf = (id) => rotLocal[id] || state.roteiros.find((r) => r.id === id);
   const podeImprimir = /negocioscreators\.com$/.test(location.hostname);
@@ -1116,7 +1118,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     }
     return r.titulo || "Roteiro sem nome";
   }
-  const novaCena = () => ({ id: "s" + uid(), fala: "", legenda: "", cenario: "", take: "", broll: "", seg: "", look: "", edicao: "" });
+  const novaCena = () => ({ id: "s" + uid(), fala: "", legenda: "", cenario: "", take: "", broll: "", seg: "", look: "", edicao: "", sfx: "", trilha: "" });
   async function criarRoteiro(cli, p, row) {
     const c = p && (p.colunas || []).find((x) => x.tipo === "texto");
     const doc = { cliente: cli, planilha: p ? p.id : "", linha: row ? row.id : "", titulo: row && c ? ((row.v || {})[c.id] || "") : "Novo roteiro",
@@ -1242,7 +1244,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       el("div", { class: "sheet" }, el("table", { class: "sh rot" },
         el("thead", {}, el("tr", {}, el("th", { class: "rn" }, "#"), RCOLS.map(([k, n]) => el("th", { class: "sh-h t-" + k }, el("div", { style: "padding:10px" }, n))), el("th", { class: "addc" }))),
         el("tbody", {}, linhas),
-        el("tfoot", {}, el("tr", {}, el("td", { class: "rn" }), el("td", { colspan: "5", style: "padding:8px 10px;font-weight:800" }, "Total"), el("td", { class: "t-seg", style: "padding:8px 10px;font-weight:800" }, segTotal(r) + "s"), el("td", { colspan: "3" }))))),
+        el("tfoot", {}, el("tr", {}, el("td", { class: "rn" }), el("td", { colspan: "5", style: "padding:8px 10px;font-weight:800" }, "Total"), el("td", { class: "t-seg", style: "padding:8px 10px;font-weight:800" }, segTotal(r) + "s"), el("td", { colspan: "5" }))))),
       el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
         el("button", { class: "btn primary", type: "button", onclick: () => editRot(r.id, (x) => { x.cenas = (x.cenas || []).concat([novaCena()]); }, true) }, "+ Cena")),
       el("div", { style: "display:flex;justify-content:flex-end" }, el("button", { class: "linkbtn", type: "button", style: "color:var(--bad)", "data-label": "Apagar este roteiro", onclick: twoStep(async () => { try { await db.collection("roteiros").doc(r.id).delete(); state.roteiro = ""; render(); } catch (e) { fail(e); } }) }, "Apagar este roteiro"))];
