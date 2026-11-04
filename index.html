@@ -328,6 +328,25 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .ped-campos .field.ok label { color: var(--ok); }
 .ped-campos .field.bad label { color: var(--bad); }
 .ped-prompt { font-family: var(--font-mono); font-size: 12.5px; min-height: 220px; background: var(--surface-2); }
+/* Calendário */
+.cal-obj { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-weight: 600; }
+.cal-refs { display: flex; flex-wrap: wrap; gap: 8px; }
+.cal-refs a { font-size: 13px; font-weight: 700; color: var(--mint); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--surface); }
+.cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.calcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 14px 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.calcard.hoje { border: 2px solid var(--mint); }
+.calcard .ctop { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+.calcard .cdia { font-weight: 800; font-size: 15px; }
+.calcard .cpauta { font-weight: 800; font-size: 15px; line-height: 1.35; }
+.calcard .cobs, .calcard .cst { font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
+.calcard .cst { color: var(--muted); }
+.calcard .cref { font-size: 13px; font-weight: 700; color: var(--mint); text-decoration: none; overflow-wrap: anywhere; }
+.calcard select { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 3px 6px; font-size: 12px; font-weight: 700; }
+.calcard textarea { min-height: 44px; font-size: 13px; }
+.calcard input { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 6px 9px; font-size: 13px; width: 100%; }
+.calcard .cact { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.calcard.feito { opacity: .72; }
+
 .login { max-width: 420px; margin: 40px auto; }
 .login input { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; font-size: 15px; }
 /* Links */
@@ -423,8 +442,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
 
 <script>
 (function () {
-  const ABAS = [["estrategia", "Estratégia"], ["trafego", "Gestão de tráfego"], ["creators", "Gestão de creators"], ["conteudo", "Criação de conteúdo"], ["gravacao", "Gravação"], ["planilhas", "Planilhas"], ["links", "Links"], ["roteiros", "Roteiros"]];
-  const CURTO = { estrategia: "Estratégia", trafego: "Tráfego", creators: "Creators", conteudo: "Conteúdo", gravacao: "Gravação", planilhas: "Planilhas", links: "Links", roteiros: "Roteiros" };
+  const ABAS = [["estrategia", "Estratégia"], ["trafego", "Gestão de tráfego"], ["creators", "Gestão de creators"], ["conteudo", "Criação de conteúdo"], ["gravacao", "Gravação"], ["planilhas", "Planilhas"], ["links", "Links"], ["roteiros", "Roteiros"], ["calendario", "Calendário"]];
+  const CURTO = { estrategia: "Estratégia", trafego: "Tráfego", creators: "Creators", conteudo: "Conteúdo", gravacao: "Gravação", planilhas: "Planilhas", links: "Links", roteiros: "Roteiros", calendario: "Calendário" };
   const ICONS = {
     estrategia: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',
     trafego: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
@@ -434,6 +453,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     planilhas: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M3 15h18M9 4v16"/>',
     links: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
     roteiros: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 12h6M10 16h6"/>',
+    calendario: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     todos: '<path d="M4 6h16M4 12h16M4 18h10"/>'
   };
   const icon = (k) => { const n = document.createElementNS("http://www.w3.org/2000/svg", "svg"); n.setAttribute("viewBox", "0 0 24 24"); n.setAttribute("class", "i"); n.setAttribute("aria-hidden", "true"); n.innerHTML = ICONS[k] || ""; return n; };
@@ -442,7 +462,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", aba: "estrategia", cli: "", mes: "" };
+  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -1400,6 +1420,115 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       }))];
   }
 
+  /* ---------- Calendário de postagem ---------- */
+  const CAL_ST = ["A gravar", "Gravado", "Editando", "Aprovado", "Teste no ar", "No feed", "Não passou", "Feito"];
+  const CAL_CLS = { "A gravar": "", "Gravado": "s-warn", "Editando": "s-warn", "Aprovado": "s-ok", "Teste no ar": "s-warn", "No feed": "s-ok", "Não passou": "s-bad", "Feito": "s-ok" };
+  const DSEM = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const calLocal = {};
+  const calOf = (id) => calLocal[id] || state.calendarios.find((c) => c.id === id);
+  const hojeISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const fmtDia = (iso) => { if (!iso) return ""; const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : DSEM[d.getDay()] + " " + String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
+  async function saveCal(id, mut, rerender) {
+    const cur = JSON.parse(JSON.stringify(calOf(id)));
+    mut(cur); calLocal[id] = cur;
+    if (rerender) render();
+    const body = Object.assign({}, cur); delete body.id; body.editadoEm = new Date().toISOString();
+    try { await db.collection("calendarios").doc(id).set(body); flash($("#cal-saved")); }
+    catch (e) { fail(e); }
+    finally { if (calLocal[id] === cur) delete calLocal[id]; }
+  }
+  const calMut = (c, it, fn) => saveCal(c.id, (x) => { const i = (x.itens || []).find((y) => y.id === it.id); if (i) fn(i); });
+  async function novoCalendario(cli) {
+    const d = new Date(); const mes = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    const doc = { cliente: cli, mes, titulo: "Calendário de " + MESES[d.getMonth()], pasta: "", objetivos: [], referencias: [], itens: [], criadoEm: new Date().toISOString() };
+    try { const ref = await db.collection("calendarios").add(doc); state.cal = ref.id; state.calEdit = true; render(); } catch (e) { fail(e); }
+  }
+  function calItem(c, it) {
+    const ed = state.calEdit; const fid = "ci-" + it.id + "-";
+    const hoje = !!it.data && it.data === hojeISO();
+    const st = el("select", { id: fid + "st", "aria-label": "Status", onchange: (e) => saveCal(c.id, (x) => { const i = x.itens.find((y) => y.id === it.id); if (i) i.status = e.target.value; }, true) },
+      CAL_ST.map((k) => el("option", { value: k, selected: (it.status || "A gravar") === k }, k)));
+    const refs = (it.refs || []).filter(Boolean);
+    if (!ed) {
+      const feito = it.status === "Feito" || it.status === "No feed";
+      return el("div", { class: "calcard" + (hoje ? " hoje" : "") + (feito ? " feito" : ""), id: hoje ? "cal-hoje" : null },
+        el("div", { class: "ctop" }, el("span", { class: "cdia" }, (hoje ? "📍 Hoje · " : "") + (fmtDia(it.data) || it.quando || "Sem data")), st),
+        (it.formato || it.serie) ? el("div", { style: "display:flex;gap:6px;flex-wrap:wrap" }, it.formato ? el("span", { class: "chip" }, it.formato) : null, it.serie ? el("span", { class: "chip " + (CAL_CLS[it.status] || "") }, it.serie) : null) : null,
+        el("div", { class: "cpauta" }, it.pauta || "Sem pauta"),
+        refs.length ? el("div", { style: "display:grid;gap:2px" }, refs.map((u, k) => el("a", { class: "cref", href: u, target: "_blank", rel: "noopener" }, "🔗 Referência" + (refs.length > 1 ? " " + (k + 1) : "")))) : null,
+        it.obs ? el("div", { class: "cobs" }, "📝 " + it.obs) : null,
+        it.stories ? el("div", { class: "cst" }, "📱 " + it.stories) : null,
+        it.legenda ? el("details", {}, el("summary", { class: "sugg" }, "Legenda"), el("div", { class: "cobs" }, it.legenda),
+          el("button", { class: "linkbtn", type: "button", onclick: (e) => { if (navigator.clipboard) navigator.clipboard.writeText(it.legenda); e.currentTarget.textContent = "Copiada ✓"; } }, "Copiar legenda")) : null,
+        it.upload ? el("div", { class: "cact" }, el("a", { class: "btn primary", href: it.upload, target: "_blank", rel: "noopener" }, "📂 Subir arquivos")) : null);
+    }
+    const fld = (campo, rotulo, input) => el("div", { class: "field" }, el("label", { for: fid + campo }, rotulo),
+      campo === "refs"
+        ? textBox(fid + campo, (it.refs || []).join("\n"), (v) => calMut(c, it, (i) => { i.refs = v.split(/\s+/).filter(Boolean); }))
+        : textBox(fid + campo, it[campo] || "", (v) => calMut(c, it, (i) => { i[campo] = v; }), input ? { input: true } : null));
+    const dataIn = el("input", { id: fid + "data", type: "date", value: it.data || "", onchange: (e) => saveCal(c.id, (x) => { const i = x.itens.find((y) => y.id === it.id); if (i) i.data = e.target.value; }, true) });
+    return el("div", { class: "calcard" },
+      el("div", { class: "ctop" }, el("div", { class: "field" }, el("label", { for: fid + "data" }, "Data"), dataIn), st),
+      fld("grupo", "Bloco / semana", true), fld("formato", "Formato", true), fld("serie", "Série", true),
+      fld("pauta", "Pauta"), fld("refs", "Links de referência (um por linha)"), fld("obs", "Obs"), fld("stories", "Stories do dia"), fld("legenda", "Legenda"),
+      fld("upload", "Link pra subir arquivos (pasta do Drive)", true),
+      el("div", { class: "cact" }, el("button", { class: "linkbtn", type: "button", style: "color:var(--bad)", "data-label": "Apagar este dia", onclick: twoStep(() => saveCal(c.id, (x) => { x.itens = x.itens.filter((y) => y.id !== it.id); }, true)) }, "Apagar este dia")));
+  }
+  function calNode(c) {
+    const ed = state.calEdit; const id = c.id;
+    const itens = (c.itens || []).slice();
+    const grupos = []; itens.forEach((it) => { const g = it.grupo || "Sem bloco"; if (!grupos.includes(g)) grupos.push(g); });
+    const n = {}; itens.forEach((it) => { const k = it.status || "A gravar"; n[k] = (n[k] || 0) + 1; });
+    const addItem = (g) => saveCal(id, (x) => {
+      x.itens = x.itens || [];
+      const novo = { id: "i" + uid(), grupo: g || "", data: "", formato: "", serie: "", pauta: "", refs: [], obs: "", stories: "", upload: "", status: "A gravar" };
+      const last = x.itens.map((y) => y.grupo || "").lastIndexOf(g || ""); if (last >= 0) x.itens.splice(last + 1, 0, novo); else x.itens.push(novo);
+    }, true);
+    const obj = c.objetivos || []; const refs = c.referencias || [];
+    return [
+      el("div", { class: "mhead" },
+        el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center" },
+          c.pasta ? el("a", { class: "btn primary", href: c.pasta, target: "_blank", rel: "noopener" }, "📁 Pasta do mês no Drive") : null,
+          el("button", { class: "btn", type: "button", onclick: () => { const h = document.getElementById("cal-hoje"); if (h) h.scrollIntoView({ behavior: "smooth", block: "center" }); else alert("Hoje não tem item no calendário."); } }, "Ir para hoje")),
+        el("div", { style: "display:flex;gap:8px;align-items:center" }, el("span", { class: "sugg", id: "cal-saved", "aria-live": "polite" }),
+          el("button", { class: "btn" + (ed ? " primary" : ""), type: "button", onclick: () => { state.calEdit = !ed; render(); } }, ed ? "✓ Terminar edição" : "✎ Editar"))),
+      ed ? el("section", { class: "block" }, el("div", { class: "fields" },
+        el("div", { class: "field", style: "grid-column: span 2" }, el("label", { for: "cal-tit" }, "Título"), textBox("cal-tit", c.titulo, (v) => saveCal(id, (x) => { x.titulo = v; }), { input: true })),
+        el("div", { class: "field" }, el("label", { for: "cal-mes" }, "Mês (AAAA-MM)"), textBox("cal-mes", c.mes, (v) => saveCal(id, (x) => { x.mes = v; }), { input: true })),
+        el("div", { class: "field", style: "grid-column: span 2" }, el("label", { for: "cal-pasta" }, "Pasta do mês no Drive"), textBox("cal-pasta", c.pasta, (v) => saveCal(id, (x) => { x.pasta = v; }), { input: true })))) : null,
+      el("section", { class: "block" }, el("h2", {}, "🎯 Objetivos do mês"),
+        ed ? el("div", { class: "field" }, el("label", { for: "cal-obj" }, "Um objetivo por linha"), textBox("cal-obj", obj.join("\n"), (v) => saveCal(id, (x) => { x.objetivos = v.split("\n").map((t) => t.trim()).filter(Boolean); })))
+          : obj.length ? el("ol", { class: "cal-obj" }, obj.map((t) => el("li", {}, t))) : el("div", { class: "sugg" }, "Sem objetivos ainda. Clique em ✎ Editar.")),
+      el("section", { class: "block" }, el("h2", {}, "🔗 Referências do mês"),
+        ed ? el("div", { class: "field" }, el("label", { for: "cal-refs" }, "Uma por linha: Nome | link"), textBox("cal-refs", refs.map((r) => r.t + " | " + r.u).join("\n"), (v) => saveCal(id, (x) => {
+          x.referencias = v.split("\n").map((l) => { const parts = l.split("|").map((y) => (y || "").trim()); const t = parts[0], u = parts[1]; return u ? { t: t || u, u } : (t && /^https?:/.test(t) ? { t, u: t } : null); }).filter(Boolean);
+        })))
+          : refs.length ? el("div", { class: "cal-refs" }, refs.map((r) => el("a", { href: r.u, target: "_blank", rel: "noopener" }, r.t))) : el("div", { class: "sugg" }, "Sem referências ainda.")),
+      itens.length ? el("div", { style: "display:flex;flex-wrap:wrap;gap:6px" }, CAL_ST.filter((k) => n[k]).map((k) => el("span", { class: "chip " + CAL_CLS[k] }, k + " " + n[k]))) : null,
+      ...grupos.map((g) => el("section", { class: "block" }, el("h2", {}, g),
+        el("div", { class: "cal-grid" }, itens.filter((it) => (it.grupo || "Sem bloco") === g).map((it) => calItem(c, it))),
+        ed ? el("div", {}, el("button", { class: "btn", type: "button", onclick: () => addItem(g === "Sem bloco" ? "" : g) }, "+ Dia em " + g)) : null)),
+      ed ? el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
+        el("button", { class: "btn", type: "button", onclick: () => { const g = prompt("Nome do novo bloco (ex.: Semana 4)"); if (g) addItem(g.trim()); } }, "+ Novo bloco"),
+        el("button", { class: "linkbtn", type: "button", style: "color:var(--bad);margin-left:auto", "data-label": "Apagar este calendário", onclick: twoStep(async () => { try { await db.collection("calendarios").doc(id).delete(); state.cal = ""; render(); } catch (e) { fail(e); } }) }, "Apagar este calendário")) : null];
+  }
+  function viewCalendario() {
+    const cli = state.cli;
+    const todos = state.calendarios.slice().sort((a, b) => (b.mes || "").localeCompare(a.mes || ""));
+    if (!cli) {
+      if (!todos.length) return [el("div", { class: "empty" }, "Nenhum calendário ainda. Escolha um cliente na lateral e crie o primeiro.")];
+      return [el("div", { class: "lgrid" }, todos.map((c) => el("div", { class: "lcard" }, el("button", { class: "lmain", type: "button", onclick: () => { state.cal = c.id; go({ cli: c.cliente }); } },
+        el("span", { class: "lt" }, c.titulo || "Calendário"), el("span", { class: "ltags" }, el("span", { class: "chip" }, cliName(c.cliente))), el("span", { class: "lu" }, (c.itens || []).length + " itens · " + (c.mes || ""))))))];
+    }
+    const mine = todos.filter((c) => c.cliente === cli);
+    const novo = el("button", { class: "btn", type: "button", onclick: () => novoCalendario(cli) }, "+ Novo calendário");
+    if (!mine.length) return [el("div", { class: "empty" }, "Nenhum calendário de " + cliName(cli) + " ainda."), el("div", {}, novo)];
+    if (!mine.some((c) => c.id === state.cal)) state.cal = (mine.find((c) => c.mes === hojeISO().slice(0, 7)) || mine[0]).id;
+    const c = calOf(state.cal);
+    return [el("div", { class: "mhead" }, el("div", { class: "seg" }, mine.map((x) => el("button", { type: "button", "aria-pressed": String(x.id === state.cal), onclick: () => { state.cal = x.id; render(); } }, x.titulo || x.mes))), novo),
+      ...calNode(c)];
+  }
+
   /* ---------- Banco no Supabase (mesma interface do banco antigo do artifact) ---------- */
   const NC_URL = "https://ldwrkqlpigjnbulfxsbh.supabase.co";
   const NC_KEY = "sb_publishable_lY-olbrferdwg4fbm7op_w_9M5IymY1";
@@ -1539,7 +1668,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     renderNav(); renderSide(); renderGoal();
     const aba = state.aba; const titulo = (ABAS.find(([k]) => k === aba) || [])[1];
     const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
-    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : viewArea(aba);
+    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : viewArea(aba);
     document.body.classList.toggle("wide", !!state.wide && aba === "planilhas" && !!state.cli);
     keepFocus(() => $("#main").replaceChildren(head, ...body.filter(Boolean)));
     document.querySelectorAll("textarea, input:not([type]), input[type=text]").forEach((e) => { e.spellcheck = true; e.lang = "pt-BR"; });
@@ -1568,6 +1697,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("links").onSnapshot((s) => { state.links = mapOf(s); render(); }, onErr);
     db.collection("roteiros").onSnapshot((s) => { state.roteiros = listOf(s); render(); }, onErr);
     db.collection("pedidos").onSnapshot((s) => { state.pedidos = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ped-"))) render(); }, onErr);
+    db.collection("calendarios").onSnapshot((s) => { state.calendarios = listOf(s); render(); }, onErr);
     db.doc("config/dicionario").onSnapshot((s) => { state.dicio = s.exists ? s.data() : null; }, onErr);
   })();
 })();
