@@ -354,6 +354,17 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .prm .ltags { display: flex; flex-wrap: wrap; gap: 6px; }
 .prm .ltags .chip { border: 0; }
 .prm-txt { white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0; max-height: 520px; overflow: auto; }
+/* Quadro do calendário */
+.kb { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; align-items: start; }
+.kcol { background: var(--surface-2); border-radius: 14px; padding: 10px; display: grid; gap: 8px; align-content: start; min-height: 200px; border: 2px dashed transparent; }
+.kcol.over { border-color: var(--mint); }
+.kcol h3 { margin: 2px 4px 4px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+.kcol .kn { font-size: 12px; font-weight: 800; color: var(--muted); background: var(--surface); border-radius: 999px; padding: 1px 8px; }
+.kcard { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; cursor: grab; box-shadow: var(--shadow); }
+.kcard:active { cursor: grabbing; }
+.kcard .ktop { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13px; }
+.kcard .kp { font-weight: 700; font-size: 13px; line-height: 1.35; }
+.kcard select { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 2px 6px; font-size: 12px; font-weight: 700; }
 .login { max-width: 420px; margin: 40px auto; }
 .login input { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; font-size: 15px; }
 /* Links */
@@ -472,7 +483,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
+  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -1491,8 +1502,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   }
 
   /* ---------- Calendário de postagem ---------- */
-  const CAL_ST = ["A gravar", "Gravado", "Editando", "Aprovado", "Teste no ar", "No feed", "Não passou", "Feito"];
-  const CAL_CLS = { "A gravar": "", "Gravado": "s-warn", "Editando": "s-warn", "Aprovado": "s-ok", "Teste no ar": "s-warn", "No feed": "s-ok", "Não passou": "s-bad", "Feito": "s-ok" };
+  const CAL_ST = ["Ideia", "A gravar", "Gravado", "Editando", "Editado", "Aprovado", "Teste no ar", "No feed", "Não passou", "Feito"];
+  const CAL_CLS = { "Ideia": "", "Editado": "s-ok", "A gravar": "", "Gravado": "s-warn", "Editando": "s-warn", "Aprovado": "s-ok", "Teste no ar": "s-warn", "No feed": "s-ok", "Não passou": "s-bad", "Feito": "s-ok" };
   const DSEM = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   const calLocal = {};
   const calOf = (id) => calLocal[id] || state.calendarios.find((c) => c.id === id);
@@ -1544,6 +1555,46 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       fld("upload", "Link pra subir arquivos (pasta do Drive)", true),
       el("div", { class: "cact" }, el("button", { class: "linkbtn", type: "button", style: "color:var(--bad)", "data-label": "Apagar este dia", onclick: twoStep(() => saveCal(c.id, (x) => { x.itens = x.itens.filter((y) => y.id !== it.id); }, true)) }, "Apagar este dia")));
   }
+
+  const CAL_COLS = [
+    { k: "ideias", t: "💡 Ideias", st: "Ideia" },
+    { k: "data", t: "📅 Com data", st: "A gravar" },
+    { k: "gravados", t: "🎥 Gravados", st: "Gravado" },
+    { k: "editados", t: "✂️ Editados", st: "Editado" },
+    { k: "postados", t: "✅ Postados", st: "No feed" }];
+  const colDe = (it) => {
+    const s = it.status || "A gravar";
+    if (s === "Ideia") return "ideias";
+    if (s === "A gravar") return it.data ? "data" : "ideias";
+    if (s === "Gravado") return "gravados";
+    if (s === "Editando" || s === "Editado" || s === "Aprovado") return "editados";
+    return "postados";
+  };
+  function moverPara(c, itId, col) {
+    const it = (c.itens || []).find((y) => y.id === itId); if (!it || colDe(it) === col.k) return;
+    let data = it.data;
+    if (col.k === "data" && !data) { const d = prompt("Data da postagem (AAAA-MM-DD)", hojeISO()); if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d.trim())) return; data = d.trim(); }
+    saveCal(c.id, (x) => { const i = x.itens.find((y) => y.id === itId); if (i) { i.status = col.st; i.data = data || ""; } }, true);
+  }
+  function calBoard(c) {
+    const itens = (c.itens || []).slice().sort((a, b) => (a.data || "9999").localeCompare(b.data || "9999"));
+    return el("div", { class: "kb" }, CAL_COLS.map((col) => {
+      const cards = itens.filter((it) => colDe(it) === col.k);
+      return el("section", { class: "kcol", "data-col": col.k,
+        ondragover: (e) => { e.preventDefault(); e.currentTarget.classList.add("over"); },
+        ondragleave: (e) => e.currentTarget.classList.remove("over"),
+        ondrop: (e) => { e.preventDefault(); e.currentTarget.classList.remove("over"); moverPara(c, e.dataTransfer.getData("text/plain"), col); } },
+        el("h3", {}, col.t, el("span", { class: "kn" }, cards.length)),
+        cards.map((it) => el("div", { class: "kcard", draggable: "true", ondragstart: (e) => { e.dataTransfer.setData("text/plain", it.id); e.dataTransfer.effectAllowed = "move"; } },
+          el("div", { class: "ktop" }, el("b", {}, fmtDia(it.data) || "Sem data"), it.formato ? el("span", { class: "chip" }, it.formato) : null),
+          el("div", { class: "kp" }, it.pauta || "Sem pauta"),
+          el("div", { class: "ktop" },
+            el("select", { "aria-label": "Status de " + (it.pauta || "item"), onchange: (e) => saveCal(c.id, (x) => { const i = x.itens.find((y) => y.id === it.id); if (i) i.status = e.target.value; }, true) },
+              CAL_ST.map((k) => el("option", { value: k, selected: (it.status || "A gravar") === k }, k))),
+            it.upload ? el("a", { class: "linkbtn", href: it.upload, target: "_blank", rel: "noopener", title: "Subir arquivos" }, "📂") : null))),
+        col.k === "ideias" ? el("button", { class: "btn", type: "button", onclick: () => saveCal(c.id, (x) => { x.itens = x.itens || []; x.itens.push({ id: "i" + uid(), grupo: "Ideias", data: "", formato: "", serie: "", pauta: prompt("Qual a ideia?") || "Nova ideia", refs: [], obs: "", stories: "", upload: "", status: "Ideia" }); }, true) }, "+ Ideia") : null);
+    }));
+  }
   function calNode(c) {
     const ed = state.calEdit; const id = c.id;
     const itens = (c.itens || []).slice();
@@ -1559,7 +1610,10 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       el("div", { class: "mhead" },
         el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center" },
           c.pasta ? el("a", { class: "btn primary", href: c.pasta, target: "_blank", rel: "noopener" }, "📁 Pasta do mês no Drive") : null,
-          el("button", { class: "btn", type: "button", onclick: () => { const h = document.getElementById("cal-hoje"); if (h) h.scrollIntoView({ behavior: "smooth", block: "center" }); else alert("Hoje não tem item no calendário."); } }, "Ir para hoje")),
+          el("div", { class: "seg", role: "group", "aria-label": "Visão" },
+            el("button", { type: "button", "aria-pressed": String(state.calView !== "quadro"), onclick: () => { state.calView = "lista"; try { localStorage.setItem("calView", "lista"); } catch (e) {} render(); } }, "📅 Calendário"),
+            el("button", { type: "button", "aria-pressed": String(state.calView === "quadro"), onclick: () => { state.calView = "quadro"; try { localStorage.setItem("calView", "quadro"); } catch (e) {} render(); } }, "🗂️ Quadro")),
+          state.calView === "quadro" ? null : el("button", { class: "btn", type: "button", onclick: () => { const h = document.getElementById("cal-hoje"); if (h) h.scrollIntoView({ behavior: "smooth", block: "center" }); else alert("Hoje não tem item no calendário."); } }, "Ir para hoje")),
         el("div", { style: "display:flex;gap:8px;align-items:center" }, el("span", { class: "sugg", id: "cal-saved", "aria-live": "polite" }),
           el("button", { class: "btn" + (ed ? " primary" : ""), type: "button", onclick: () => { state.calEdit = !ed; render(); } }, ed ? "✓ Terminar edição" : "✎ Editar"))),
       ed ? el("section", { class: "block" }, el("div", { class: "fields" },
@@ -1575,7 +1629,9 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         })))
           : refs.length ? el("div", { class: "cal-refs" }, refs.map((r) => el("a", { href: r.u, target: "_blank", rel: "noopener" }, r.t))) : el("div", { class: "sugg" }, "Sem referências ainda.")),
       itens.length ? el("div", { style: "display:flex;flex-wrap:wrap;gap:6px" }, CAL_ST.filter((k) => n[k]).map((k) => el("span", { class: "chip " + CAL_CLS[k] }, k + " " + n[k]))) : null,
-      ...grupos.map((g) => el("section", { class: "block" }, el("h2", {}, g),
+      state.calView === "quadro" ? el("div", { class: "sugg" }, "Arraste os cards entre as colunas (ou troque o status no card). Sem data fica em Ideias.") : null,
+      state.calView === "quadro" ? calBoard(c) : null,
+      ...(state.calView === "quadro" ? [] : grupos).map((g) => el("section", { class: "block" }, el("h2", {}, g),
         el("div", { class: "cal-grid" }, itens.filter((it) => (it.grupo || "Sem bloco") === g).map((it) => calItem(c, it))),
         ed ? el("div", {}, el("button", { class: "btn", type: "button", onclick: () => addItem(g === "Sem bloco" ? "" : g) }, "+ Dia em " + g)) : null)),
       ed ? el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
