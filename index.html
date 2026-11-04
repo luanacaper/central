@@ -365,6 +365,9 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .kcard .ktop { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13px; }
 .kcard .kp { font-weight: 700; font-size: 13px; line-height: 1.35; }
 .kcard select { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 2px 6px; font-size: 12px; font-weight: 700; }
+.senha-fundo { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(15,16,19,.55); padding: 16px; }
+.senha-fundo .login { margin: 0; width: min(420px, 100%); }
+.rail-sessao { padding: 0 10px; color: var(--rail-muted); font-size: 12px; }
 .login { max-width: 420px; margin: 40px auto; }
 .login input { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; font-size: 15px; }
 /* Links */
@@ -1658,6 +1661,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   /* ---------- Banco no Supabase (mesma interface do banco antigo do artifact) ---------- */
   const NC_URL = "https://ldwrkqlpigjnbulfxsbh.supabase.co";
   const NC_KEY = "sb_publishable_lY-olbrferdwg4fbm7op_w_9M5IymY1";
+  const NC_VEIO_DO_LINK = /type=(magiclink|recovery|signup|invite)/.test(location.hash);  // entrou pelo link do e-mail: oferece criar senha
   const sb = window.supabase.createClient(NC_URL, NC_KEY, { auth: { persistSession: true, detectSessionInUrl: true, flowType: "implicit" } });
   function makeDb() {
     const cache = {};          // col -> { id -> data }
@@ -1730,24 +1734,67 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     return null;
   }
   function telaLogin(msg, logado) {
-    const email = el("input", { id: "login-email", type: "email", placeholder: "seu e-mail", autocomplete: "email", value: (() => { try { return localStorage.getItem("nc-email") || ""; } catch (e) { return ""; } })() });
+    const salvo = (() => { try { return localStorage.getItem("nc-email") || ""; } catch (e) { return ""; } })();
+    const email = el("input", { id: "login-email", type: "email", placeholder: "seu e-mail", autocomplete: "username", value: salvo });
+    const senha = el("input", { id: "login-senha", type: "password", placeholder: "sua senha", autocomplete: "current-password" });
     const aviso = el("div", { class: "sugg", "aria-live": "polite" }, msg);
-    const enviar = async (ev) => {
+    const entrarComSenha = async (ev) => {
       ev.preventDefault();
-      const e = email.value.trim(); if (!e) return;
+      const e = email.value.trim(); if (!e || !senha.value) { aviso.textContent = "Preencha o e-mail e a senha."; return; }
+      try { localStorage.setItem("nc-email", e); } catch (x) {}
+      aviso.textContent = "Entrando…";
+      const { error } = await sb.auth.signInWithPassword({ email: e, password: senha.value });
+      if (error) { aviso.textContent = /invalid/i.test(error.message) ? "E-mail ou senha não conferem. Se ainda não criou sua senha, use o link por e-mail abaixo." : "Não deu para entrar: " + error.message; return; }
+      location.reload();
+    };
+    const mandarLink = async () => {
+      const e = email.value.trim(); if (!e) { aviso.textContent = "Digite o seu e-mail primeiro."; return; }
       try { localStorage.setItem("nc-email", e); } catch (x) {}
       aviso.textContent = "Enviando…";
       const { error } = await sb.auth.signInWithOtp({ email: e, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
-      aviso.textContent = error ? "Não deu para enviar: " + error.message : "Pronto! Abra o e-mail e clique no link para entrar. Pode fechar esta aba.";
+      aviso.textContent = error ? "Não deu para enviar: " + error.message : "Pronto! Abra o e-mail e clique no link. Ao entrar, crie a sua senha para não precisar mais do e-mail.";
     };
-    $("#main").replaceChildren(el("form", { class: "panel login", onsubmit: enviar },
+    $("#main").replaceChildren(el("form", { class: "panel login", onsubmit: entrarComSenha },
       el("h1", {}, "Entrar"),
-      el("p", { class: "sugg" }, "Digite seu e-mail. Você recebe um link para entrar, sem senha."),
-      email,
-      el("button", { class: "btn primary", type: "submit" }, "Receber link de acesso"),
+      email, senha,
+      el("button", { class: "btn primary", type: "submit" }, "Entrar"),
+      el("button", { class: "linkbtn", type: "button", onclick: mandarLink }, "Primeira vez ou esqueceu a senha? Receber link por e-mail"),
       logado ? el("button", { class: "linkbtn", type: "button", onclick: async () => { await sb.auth.signOut(); location.reload(); } }, "Sair desta conta") : null,
       aviso));
     $("#side").replaceChildren(); $("#mside").replaceChildren(); $("#areas").replaceChildren();
+  }
+  function telaSenha(primeira) {
+    const fundo = el("div", { class: "senha-fundo", role: "dialog", "aria-modal": "true", "aria-labelledby": "senha-t" });
+    const s1 = el("input", { id: "senha-nova", type: "password", placeholder: "nova senha (mínimo 6 caracteres)", autocomplete: "new-password" });
+    const s2 = el("input", { id: "senha-conf", type: "password", placeholder: "repita a senha", autocomplete: "new-password" });
+    const aviso = el("div", { class: "sugg", "aria-live": "polite" });
+    const fechar = () => fundo.remove();
+    const salvar = async (ev) => {
+      ev.preventDefault();
+      if (s1.value.length < 6) { aviso.textContent = "A senha precisa ter pelo menos 6 caracteres."; return; }
+      if (s1.value !== s2.value) { aviso.textContent = "As duas senhas não estão iguais."; return; }
+      aviso.textContent = "Salvando…";
+      const { error } = await sb.auth.updateUser({ password: s1.value });
+      if (error) { aviso.textContent = "Não deu para salvar: " + error.message; return; }
+      aviso.textContent = "Senha salva! Da próxima vez, entre com o e-mail e essa senha.";
+      setTimeout(fechar, 1800);
+    };
+    fundo.append(el("form", { class: "panel login", onsubmit: salvar },
+      el("h3", { id: "senha-t" }, primeira ? "Crie a sua senha" : "Trocar a senha"),
+      el("p", { class: "sugg" }, primeira ? "Assim você entra em qualquer aparelho ou aba com e-mail e senha, sem esperar o link." : "Digite a nova senha duas vezes."),
+      s1, s2,
+      el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" }, el("button", { class: "btn primary", type: "submit" }, "Salvar senha"), el("button", { class: "btn", type: "button", onclick: fechar }, primeira ? "Agora não" : "Cancelar")),
+      aviso));
+    document.body.append(fundo);
+    setTimeout(() => s1.focus(), 50);
+  }
+  function rodapeSessao(sessao) {
+    let box = document.getElementById("nc-sessao");
+    if (!box) { box = el("div", { id: "nc-sessao", class: "rail-sessao" }); $("#round").after(box); }
+    box.replaceChildren(el("span", {}, sessao.user.email), el("br"),
+      el("button", { class: "linkbtn", type: "button", style: "color:var(--rail-muted);font-size:12px", onclick: () => telaSenha(false) }, "Senha"), " · ",
+      el("button", { class: "linkbtn", type: "button", style: "color:var(--rail-muted);font-size:12px", onclick: async () => { await sb.auth.signOut(); location.reload(); } }, "Sair"));
+    if (NC_VEIO_DO_LINK) setTimeout(() => telaSenha(true), 600);
   }
 
   /* ---------- Áreas ---------- */
@@ -1805,7 +1852,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   (async () => {
     const sessao = await entrar(); if (!sessao) return;
     db = makeDb();
-    $("#round").replaceChildren(el("span", {}, sessao.user.email), el("br"), el("button", { class: "linkbtn", type: "button", style: "color:var(--rail-muted);font-size:12px", onclick: async () => { await sb.auth.signOut(); location.reload(); } }, "Sair"));
+    rodapeSessao(sessao);
     const onErr = (e) => { if (e && e.code !== "unavailable") fail(e); };
     const mapOf = (s) => { const m = {}; s.docs.forEach((d) => { m[d.id] = d.data(); }); return m; };
     const listOf = (s) => s.docs.map((d) => Object.assign({ id: d.id }, d.data()));
