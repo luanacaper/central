@@ -365,6 +365,32 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .kcard .ktop { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13px; }
 .kcard .kp { font-weight: 700; font-size: 13px; line-height: 1.35; }
 .kcard select { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 2px 6px; font-size: 12px; font-weight: 700; }
+/* Campanhas no ar */
+.est-list { display: grid; gap: 14px; }
+.est-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; padding: 16px 18px; }
+.est-head h3 { margin: 2px 0 6px; font-size: 16px; }
+.est-acts { display: flex; gap: 14px; align-items: start; flex-wrap: wrap; }
+.est-set { gap: 8px; }
+.est-sethead { display: flex; gap: 8px; align-items: center; }
+.est-dl { display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+.est-dl dt { color: var(--muted); font-weight: 700; font-size: 13px; }
+.est-dl dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.est-ads-view { display: grid; gap: 8px; margin-top: 4px; }
+.est-ad { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); min-width: 0; }
+.est-ad img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; display: block; }
+.est-adname { font-weight: 700; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.est-nothumb { width: 64px; height: 64px; border-radius: 8px; background: var(--surface-2); color: var(--muted); font-size: 11px; display: grid; place-items: center; text-align: center; }
+.est-nothumb.big { width: 100%; height: auto; aspect-ratio: 1; }
+.est-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.est-thumb { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); display: grid; }
+.est-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--surface-2); }
+.est-thumb figcaption { padding: 10px 12px; display: grid; gap: 4px; font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+.est-form { gap: 12px; }
+.est-sets { display: grid; gap: 12px; }
+.est-setform { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; background: var(--bg); }
+.est-ads { display: grid; gap: 8px; }
+.est-adrow { align-items: end; grid-template-columns: 2fr 2fr auto; }
+@media (max-width: 560px) { .est-dl { grid-template-columns: 1fr; } .est-dl dt { margin-top: 4px; } .est-adrow { grid-template-columns: 1fr; } }
 .senha-fundo { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(15,16,19,.55); padding: 16px; }
 .senha-fundo .login { margin: 0; width: min(420px, 100%); }
 .rail-sessao { padding: 0 10px; color: var(--rail-muted); font-size: 12px; }
@@ -465,8 +491,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
 
 <script>
 (function () {
-  const ABAS = [["estrategia", "Estratégia"], ["trafego", "Gestão de tráfego"], ["creators", "Gestão de creators"], ["conteudo", "Criação de conteúdo"], ["gravacao", "Gravação"], ["planilhas", "Planilhas"], ["links", "Links"], ["roteiros", "Roteiros"], ["calendario", "Calendário"]];
-  const CURTO = { estrategia: "Estratégia", trafego: "Tráfego", creators: "Creators", conteudo: "Conteúdo", gravacao: "Gravação", planilhas: "Planilhas", links: "Links", roteiros: "Roteiros", calendario: "Calendário" };
+  const ABAS = [["estrategia", "Estratégia"], ["trafego", "Gestão de tráfego"], ["creators", "Gestão de creators"], ["conteudo", "Criação de conteúdo"], ["gravacao", "Gravação"], ["planilhas", "Planilhas"], ["links", "Links"], ["roteiros", "Roteiros"], ["calendario", "Calendário"], ["campanhas", "Campanhas no ar"]];
+  const CURTO = { estrategia: "Estratégia", trafego: "Tráfego", creators: "Creators", conteudo: "Conteúdo", gravacao: "Gravação", planilhas: "Planilhas", links: "Links", roteiros: "Roteiros", calendario: "Calendário", campanhas: "Campanhas" };
   const ICONS = {
     estrategia: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',
     trafego: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
@@ -477,6 +503,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     links: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
     roteiros: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 12h6M10 16h6"/>',
     calendario: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    campanhas: '<rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="6" y="11" width="15" height="4" rx="1.5"/><rect x="9" y="17" width="12" height="4" rx="1.5"/><path d="M4.5 9v8.5H9M4.5 13H6"/>',
     prompts: '<path d="M5 4h14v12H9l-4 4z"/><path d="M9 9h6M9 12h4"/>',
     todos: '<path d="M4 6h16M4 12h16M4 18h10"/>'
   };
@@ -486,7 +513,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
+  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), estrutura: {}, campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -1072,6 +1099,144 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     if (!mine.some((p) => p.id === state.sheet)) state.sheet = mine[0].id;
     return [el("div", { class: "mhead" }, el("div", { class: "seg" }, mine.map((p) => el("button", { type: "button", "aria-pressed": String(p.id === state.sheet), onclick: () => { state.sheet = p.id; render(); } }, (sheetOf(p.id) || p).titulo || "Sem título"))), novo),
       sheetNode(sheetOf(state.sheet))];
+  }
+
+  /* ---------- Campanhas no ar (estrutura) ---------- */
+  const brlS = (v) => { const n = numDot(v); return n === null ? "" : "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  const estOf = (slug) => state.estrutura[slug] || null;
+  const campsOf = (slug) => ((estOf(slug) || {}).campanhas) || [];
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  async function saveCamps(slug, campanhas) {
+    try {
+      const ref = db.collection("estrutura").doc(slug);
+      if (state.estrutura[slug]) await ref.update({ campanhas: clone(campanhas) }); else await ref.set({ campanhas: clone(campanhas), contas: [] });
+      flash($("#est-saved"));
+    } catch (e) { fail(e); }
+  }
+  function textoCampanha(c) {
+    const L = ["Campanha: " + (c.nome || ""), c.objetivo || "", "Orçamento a nível de " + (c.orcamentoNivel || "conjunto") + (c.orcamentoNivel === "campanha" && c.orcamentoCampanha ? ": " + brlS(c.orcamentoCampanha) : "") + "."];
+    (c.conjuntos || []).forEach((s, i) => {
+      L.push("", "Conjunto " + (i + 1) + ":", s.nome || "");
+      if (s.evento) L.push("Evento " + s.evento.toLowerCase());
+      if (s.orcamento) L.push("Orçamento: " + brlS(s.orcamento));
+      if (s.publico) L.push(s.publico === "Aberto" ? "Público aberto" : "Público: " + s.publico);
+      L.push("Advantage + " + (s.advantage ? "ativado" : "desativado"));
+      L.push((s.interesses || "Sem interesses") + (s.idade ? ", idade " + s.idade : "") + (s.genero && s.genero !== "Todos" ? ", " + s.genero.toLowerCase() : "") + ".");
+      if (s.local) L.push("Local: " + s.local);
+      const links = [...new Set((s.anuncios || []).map((a) => a.link).filter(Boolean))];
+      if (links.length) L.push("Links: " + links.join(" · "));
+      L.push(s.posicionamento === "Automático" || !s.posicionamento ? "Sem posicionamento personalizado." : s.posicionamento);
+      (s.anuncios || []).forEach((a) => L.push("", "Anúncio: " + (a.nome || "")));
+      if (s.obs) L.push("Obs.: " + s.obs);
+    });
+    if (c.obs) L.push("", "Obs.: " + c.obs);
+    return L.join("\n");
+  }
+  const stChip = (st) => {
+    const s = String(st || "").toUpperCase();
+    const cls = s === "ACTIVE" ? "s-ok" : (s === "IN_PROCESS" || s === "PENDING_REVIEW") ? "s-warn" : (s && s !== "MANUAL") ? "s-bad" : "";
+    const nome = { ACTIVE: "Ativo", IN_PROCESS: "Em análise", PENDING_REVIEW: "Em análise", PAUSED: "Pausado", MANUAL: "Manual" }[s] || (s ? s.toLowerCase() : "Manual");
+    return el("span", { class: "chip " + cls }, nome);
+  };
+  function campForm(slug, c0, ci) {
+    const novo = ci < 0;
+    const key = novo ? "novo" : c0.id;
+    const c = state.campDraftKey === key && state.campDraft ? state.campDraft : clone(c0 || { id: "m" + uid(), manual: true, nome: "", objetivo: "Leads", orcamentoNivel: "conjunto", conjuntos: [] });
+    state.campDraft = c; state.campDraftKey = key;
+    const fid = "cf-" + c.id + "-";
+    const inp = (k, obj, ph, id) => { const n = el("input", { id: id || (fid + k), value: obj[k] === undefined || obj[k] === null ? "" : String(obj[k]), placeholder: ph || "" }); n.addEventListener("input", () => { obj[k] = n.value; }); return n; };
+    const fld = (lab, node, span) => el("div", { class: "field", style: span ? "grid-column: span " + span : "" }, el("label", { for: node.id || null }, lab), node);
+    const nivel = el("select", { id: fid + "niv", onchange: (e) => { c.orcamentoNivel = e.target.value; } }, ["conjunto", "campanha"].map((v) => el("option", { value: v, selected: c.orcamentoNivel === v }, "No " + v)));
+    const conjBox = el("div", { class: "est-sets" });
+    const drawSets = () => conjBox.replaceChildren(...(c.conjuntos || []).map((s, si) => {
+      const sid = fid + "s" + si + "-";
+      const adv = el("input", { type: "checkbox", id: sid + "adv", checked: !!s.advantage, onchange: (e) => { s.advantage = e.target.checked; } });
+      const ads = el("div", { class: "est-ads" }, (s.anuncios || []).map((a, ai) => {
+        const aid = sid + "a" + ai + "-";
+        return el("div", { class: "fields est-adrow" }, fld("Anúncio", inp("nome", a, "Nome do anúncio", aid + "nome")), fld("Link", inp("link", a, "https://…", aid + "link")),
+          el("button", { class: "x", type: "button", title: "Tirar anúncio", "aria-label": "Tirar anúncio", onclick: () => { s.anuncios.splice(ai, 1); drawSets(); } }, "×"));
+      }));
+      return el("div", { class: "est-setform" },
+        el("div", { class: "mhead" }, el("b", {}, "Conjunto " + (si + 1)), el("button", { class: "linkbtn", type: "button", style: "color:var(--bad)", onclick: () => { c.conjuntos.splice(si, 1); drawSets(); } }, "Tirar conjunto")),
+        el("div", { class: "fields" }, fld("Nome do conjunto", inp("nome", s, "", sid + "nome"), 3), fld("Evento", inp("evento", s, "Concluir inscrição", sid + "ev")), fld("Orçamento/dia (R$)", inp("orcamento", s, "11,00", sid + "orc")),
+          fld("Público", inp("publico", s, "Aberto / semelhante…", sid + "pub"), 2), fld("Idade", inp("idade", s, "25-65", sid + "id")), fld("Interesses", inp("interesses", s, "Sem interesses", sid + "int"), 2), fld("Local", inp("local", s, "Brasil", sid + "loc")),
+          fld("Posicionamento", inp("posicionamento", s, "Automático", sid + "pos"), 2), fld("Observação", inp("obs", s, "", sid + "obs"), 3)),
+        el("label", { class: "citem", for: sid + "adv" }, adv, el("span", {}, "Advantage+ ativado")),
+        ads, el("div", {}, el("button", { class: "btn", type: "button", onclick: () => { (s.anuncios = s.anuncios || []).push({ id: "m" + uid(), nome: "", link: "", status: "MANUAL" }); drawSets(); } }, "+ Anúncio")));
+    }));
+    drawSets();
+    const salvar = () => {
+      c.editado = true;
+      const lista = campsOf(slug).slice();
+      if (novo) lista.push(c); else lista[ci] = c;
+      state.campEdit = ""; state.campDraft = null; state.campDraftKey = ""; saveCamps(slug, lista); render();
+    };
+    return el("div", { class: "panel est-form" },
+      el("div", { class: "fields" }, fld("Campanha", inp("nome", c, "Nome da campanha"), 3), fld("Objetivo", inp("objetivo", c, "Leads")), fld("Orçamento", nivel), fld("Orçamento da campanha/dia (R$)", inp("orcamentoCampanha", c, "só se for na campanha")), fld("Observação", inp("obs", c), 3)),
+      conjBox,
+      el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center" },
+        el("button", { class: "btn", type: "button", onclick: () => { (c.conjuntos = c.conjuntos || []).push({ id: "m" + uid(), nome: "", evento: "", orcamento: "", publico: "Aberto", advantage: true, idade: "", interesses: "Sem interesses", local: "Brasil", posicionamento: "Automático", status: "MANUAL", anuncios: [] }); drawSets(); } }, "+ Conjunto"),
+        el("button", { class: "btn primary", type: "button", onclick: salvar }, novo ? "Adicionar campanha" : "Salvar"),
+        el("button", { class: "btn", type: "button", onclick: () => { state.campEdit = ""; state.campDraft = null; state.campDraftKey = ""; render(); } }, "Cancelar"),
+        novo ? null : el("button", { class: "linkbtn", type: "button", style: "color:var(--bad);margin-left:auto", "data-label": "Apagar campanha", onclick: twoStep(() => { state.campEdit = ""; state.campDraft = null; state.campDraftKey = ""; saveCamps(slug, campsOf(slug).filter((x, j) => j !== ci)); }) }, "Apagar campanha")),
+      c.manual ? null : el("span", { class: "sugg" }, "Esta campanha veio do Meta. Depois de salvar, a sincronização mantém o seu texto e só atualiza status e miniaturas."));
+  }
+  function campCard(slug, c, ci, editavel) {
+    if (editavel && state.campEdit === c.id) return campForm(slug, c, ci);
+    const copiar = el("button", { class: "linkbtn", type: "button", onclick: (e) => { const b = e.currentTarget; navigator.clipboard.writeText(textoCampanha(c)).then(() => { b.textContent = "Copiado ✓"; setTimeout(() => { b.textContent = "Copiar texto"; }, 1500); }); } }, "Copiar texto");
+    return el("article", { class: "card est-card" },
+      el("header", { class: "est-head" },
+        el("div", {}, el("div", { class: "sugg" }, (c.manual ? "Inserida à mão" : "Meta Ads") + (c.contaNome ? " · " + c.contaNome : "") + (c.editado && !c.manual ? " · editada" : "")),
+          el("h3", {}, c.nome || "Sem nome"),
+          el("div", { class: "ltags" }, el("span", { class: "chip" }, c.objetivo || "—"), el("span", { class: "chip" }, "Orçamento no " + (c.orcamentoNivel || "conjunto") + (c.orcamentoNivel === "campanha" && c.orcamentoCampanha ? " · " + brlS(c.orcamentoCampanha) + "/dia" : "")))),
+        el("div", { class: "est-acts" }, copiar, editavel ? el("button", { class: "linkbtn", type: "button", onclick: () => { state.campEdit = c.id; render(); } }, "Editar") : null,
+          c.conta ? el("a", { class: "linkbtn", href: "https://adsmanager.facebook.com/adsmanager/manage/adsets?act=" + c.conta + "&selected_campaign_ids=" + c.id, target: "_blank", rel: "noopener" }, "Gerenciador ↗") : null)),
+      ...(c.conjuntos || []).map((s, si) => el("section", { class: "est-set" },
+        el("div", { class: "est-sethead" }, el("span", { class: "sugg" }, "Conjunto " + (si + 1)), stChip(s.status)),
+        el("b", {}, s.nome || "Sem nome"),
+        el("dl", { class: "est-dl" },
+          el("dt", {}, "Evento"), el("dd", {}, s.evento || "—"),
+          el("dt", {}, "Orçamento"), el("dd", { class: "mono" }, s.orcamento ? brlS(s.orcamento) + "/dia" : (c.orcamentoNivel === "campanha" ? "na campanha" : "—")),
+          el("dt", {}, "Público"), el("dd", {}, s.publico || "Aberto"),
+          el("dt", {}, "Advantage+"), el("dd", {}, s.advantage ? "Ativado" : "Desativado"),
+          el("dt", {}, "Segmentação"), el("dd", {}, (s.interesses || "Sem interesses") + (s.idade ? " · idade " + s.idade : "") + (s.genero && s.genero !== "Todos" ? " · " + s.genero : "") + (s.local ? " · " + s.local : "")),
+          el("dt", {}, "Posicionamento"), el("dd", {}, s.posicionamento || "Automático"),
+          s.obs ? el("dt", {}, "Obs.") : null, s.obs ? el("dd", {}, s.obs) : null),
+        el("div", { class: "est-ads-view" }, (s.anuncios || []).map((a) => el("div", { class: "est-ad" },
+          a.thumb ? el("img", { src: a.thumb, alt: "", loading: "lazy" }) : el("span", { class: "est-nothumb" }, a.tipo || "Anúncio"),
+          el("div", { style: "min-width:0" }, el("div", { class: "est-adname" }, a.nome || "Sem nome", " ", stChip(a.status)),
+            a.link ? el("a", { class: "lu mono", href: a.link.replace(/\{\{[^}]+\}\}/g, ""), target: "_blank", rel: "noopener", title: a.link }, linkHost(a.link.split("?")[0])) : el("span", { class: "sugg" }, "sem link"))))))),
+      c.obs ? el("section", {}, el("span", { class: "sugg" }, "Obs.: " + c.obs)) : null);
+  }
+  function thumbsGrid(itens) {
+    if (!itens.length) return el("div", { class: "empty" }, "Nenhum anúncio rodando.");
+    return el("div", { class: "est-thumbs" }, itens.map(({ slug, c, s, a }) => el("figure", { class: "est-thumb" },
+      a.thumb ? el("a", { href: a.thumb, target: "_blank", rel: "noopener" }, el("img", { src: a.thumb, alt: a.nome || "", loading: "lazy" })) : el("div", { class: "est-nothumb big" }, a.tipo || "sem miniatura"),
+      el("figcaption", {}, el("b", {}, a.nome || "Sem nome"), el("span", { class: "sugg" }, (state.cli ? "" : cliName(slug) + " · ") + (s.nome || "")), el("span", { class: "sugg" }, c.nome || ""),
+        el("span", { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, stChip(a.status), c.conta && !String(a.id || "").startsWith("m") ? el("a", { class: "linkbtn", href: "https://adsmanager.facebook.com/adsmanager/manage/ads?act=" + c.conta + "&selected_ad_ids=" + a.id, target: "_blank", rel: "noopener" }, "Ver ao vivo ↗") : null)))));
+  }
+  function viewCampanhas() {
+    const cli = state.cli;
+    const slugs = cli ? [cli] : cfgClients().map((c) => c.slug).filter((s) => campsOf(s).length);
+    const allAds = [];
+    slugs.forEach((slug) => campsOf(slug).forEach((c) => (c.conjuntos || []).forEach((s) => (s.anuncios || []).forEach((a) => allAds.push({ slug, c, s, a })))));
+    const nC = slugs.reduce((n, s) => n + campsOf(s).length, 0);
+    const nS = slugs.reduce((n, s) => n + campsOf(s).reduce((m, c) => m + (c.conjuntos || []).length, 0), 0);
+    const quando = slugs.map((s) => (estOf(s) || {}).atualizadoEm).filter(Boolean).sort().pop();
+    const contas = cli ? ((estOf(cli) || {}).contas || []) : [];
+    const head = el("div", { class: "mhead" },
+      el("div", { class: "seg" }, [["estrutura", "Estrutura"], ["miniaturas", "Miniaturas"]].map(([k, n]) => el("button", { type: "button", "aria-pressed": String(state.campView === k), onclick: () => { state.campView = k; try { localStorage.setItem("campView", k); } catch (e) {} render(); } }, n))),
+      el("span", { class: "sugg" }, nC + " campanha" + (nC === 1 ? "" : "s") + " · " + nS + " conjunto" + (nS === 1 ? "" : "s") + " · " + allAds.length + " anúncio" + (allAds.length === 1 ? "" : "s") + (quando ? " · Meta sincronizado em " + new Date(quando).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""), " ", el("span", { id: "est-saved", class: "saved" })),
+      cli && state.campView !== "miniaturas" ? el("button", { class: "btn primary", type: "button", onclick: () => { state.campEdit = "novo"; render(); } }, "+ Campanha") : null);
+    const live = contas.length ? el("div", { class: "ltags" }, el("span", { class: "sugg" }, "Ver em tempo real no Gerenciador:"), contas.map((ct) => el("a", { class: "chip", href: "https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=" + ct.id, target: "_blank", rel: "noopener" }, (ct.nome || ct.id) + " ↗"))) : null;
+    if (state.campView === "miniaturas") return [head, live, thumbsGrid(allAds)];
+    if (!slugs.length) return [head, el("div", { class: "empty" }, "Nenhuma campanha ainda. Escolha um cliente na lateral para inserir à mão.")];
+    if (cli) return [head, live, state.campEdit === "novo" ? campForm(cli, null, -1) : null,
+      campsOf(cli).length ? null : el("div", { class: "empty" }, "Nenhuma campanha de " + cliName(cli) + " rodando agora. Use “+ Campanha” para inserir à mão."),
+      el("div", { class: "est-list" }, campsOf(cli).map((c, i) => campCard(cli, c, i, true)))];
+    return [head, ...slugs.map((slug) => el("section", { class: "block" },
+      el("div", { class: "mhead" }, el("h2", {}, cliName(slug)), el("button", { class: "linkbtn", type: "button", onclick: () => go({ cli: slug }) }, "Editar")),
+      el("div", { class: "est-list" }, campsOf(slug).map((c, i) => campCard(slug, c, i, false)))))];
   }
 
   /* ---------- Links ---------- */
@@ -1841,7 +2006,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     renderNav(); renderSide(); renderGoal();
     const aba = state.aba; const titulo = aba === "prompts" ? "Prompts" : (ABAS.find(([k]) => k === aba) || [])[1];
     const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, aba === "prompts" ? "Biblioteca da Negócios Creators" : state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
-    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "prompts" ? viewPrompts() : viewArea(aba);
+    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "campanhas" ? viewCampanhas() : aba === "prompts" ? viewPrompts() : viewArea(aba);
     document.body.classList.toggle("wide", !!state.wide && aba === "planilhas" && !!state.cli);
     keepFocus(() => $("#main").replaceChildren(head, ...body.filter(Boolean)));
     document.querySelectorAll("textarea, input:not([type]), input[type=text]").forEach((e) => { e.spellcheck = true; e.lang = "pt-BR"; });
@@ -1871,6 +2036,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("roteiros").onSnapshot((s) => { state.roteiros = listOf(s); render(); }, onErr);
     db.collection("pedidos").onSnapshot((s) => { state.pedidos = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ped-"))) render(); }, onErr);
     db.collection("prompts").onSnapshot((s) => { state.prompts = listOf(s); render(); }, onErr);
+    db.collection("estrutura").onSnapshot((s) => { state.estrutura = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("cf-"))) render(); }, onErr);
     db.collection("calendarios").onSnapshot((s) => { state.calendarios = listOf(s); render(); }, onErr);
     db.doc("config/dicionario").onSnapshot((s) => { state.dicio = s.exists ? s.data() : null; }, onErr);
   })();
