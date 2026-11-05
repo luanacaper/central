@@ -365,6 +365,21 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .kcard .ktop { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13px; }
 .kcard .kp { font-weight: 700; font-size: 13px; line-height: 1.35; }
 .kcard select { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 2px 6px; font-size: 12px; font-weight: 700; }
+/* Próximos passos */
+.px-list { display: grid; gap: 6px; }
+.px-row { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+.px-row:first-child { border-top: 0; }
+.px-row > * { min-width: 0; }
+.px-row textarea.px-txt { width: 100%; box-sizing: border-box; min-height: 38px; padding: 8px 10px; field-sizing: content; resize: vertical; }
+.sblock.px { min-width: 0; overflow: hidden; }
+.px .addrow { flex-wrap: wrap; }
+.px .addrow > input:first-child { flex: 1 1 100%; }
+.px-meta { grid-column: 2; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.px-row input.px-txt { width: 100%; text-align: left; font-family: inherit; }
+.px-row .px-date, .addrow .px-date { width: 132px; flex: none; font-family: var(--font-mono); font-size: 13px; }
+.px-when { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.px-row.late .px-when, td.px-latecell { color: var(--bad); font-weight: 700; }
+.px-row.done textarea.px-txt { text-decoration: line-through; color: var(--muted); }
 /* Campanhas no ar */
 .est-list { display: grid; gap: 14px; }
 .est-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; padding: 16px 18px; }
@@ -513,7 +528,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), estrutura: {}, campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
+  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), proximos: {}, estrutura: {}, campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -1963,14 +1978,64 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   }
 
   /* ---------- Áreas ---------- */
+  /* ---------- Próximos passos (Estratégia, por cliente) ---------- */
+  const proxOf = (slug) => ((state.proximos[slug] || {}).itens) || [];
+  async function saveProx(slug, itens) {
+    try {
+      const ref = db.collection("proximos").doc(slug);
+      const body = { itens: JSON.parse(JSON.stringify(itens)) };
+      if (state.proximos[slug]) await ref.update(body); else await ref.set(body);
+      flash($("#px-saved-" + slug));
+    } catch (e) { fail(e); }
+  }
+  const proxOrd = (a, b) => (a.feito ? 1 : 0) - (b.feito ? 1 : 0) || String(a.prazo || "9999").localeCompare(String(b.prazo || "9999")) || String(a.criadoEm || "").localeCompare(String(b.criadoEm || ""));
+  const prazoTxt = (iso) => { if (!iso) return ""; const dd = Math.round((new Date(iso + "T12:00:00") - new Date(today() + "T12:00:00")) / 86400000); return dd < 0 ? "atrasado " + (-dd) + "d" : dd === 0 ? "hoje" : dd === 1 ? "amanhã" : "em " + dd + "d"; };
+  function proxBlock(slug) {
+    const itens = proxOf(slug);
+    const edit = (id, patch) => saveProx(slug, proxOf(slug).map((x) => x.id === id ? Object.assign({}, x, patch) : x));
+    const rows = itens.slice().sort(proxOrd).map((p) => {
+      const cid = "px-" + slug + "-" + p.id;
+      const late = !p.feito && p.prazo && p.prazo < today();
+      const txt = textBox(cid + "-t", p.texto, (v) => edit(p.id, { texto: v }), { attrs: { class: "px-txt", rows: 1, "aria-label": "Próximo passo" } });
+      const dt = el("input", { id: cid + "-d", type: "date", class: "cell px-date", value: p.prazo || "", "aria-label": "Prazo", onchange: (e) => edit(p.id, { prazo: e.target.value }) });
+      return el("div", { class: "px-row" + (p.feito ? " done" : "") + (late ? " late" : "") },
+        el("input", { type: "checkbox", id: cid + "-c", checked: !!p.feito, "aria-label": "Feito", onchange: (e) => edit(p.id, { feito: e.target.checked, feitoEm: e.target.checked ? today() : "" }) }),
+        txt,
+        el("button", { class: "x", type: "button", title: "Apagar (clique 2 vezes)", "aria-label": "Apagar passo", "data-label": "×", onclick: twoStep(() => saveProx(slug, proxOf(slug).filter((x) => x.id !== p.id))) }, "×"),
+        el("div", { class: "px-meta" }, dt, el("span", { class: "px-when" }, p.feito ? "feito " + fmtDate(p.feitoEm) : prazoTxt(p.prazo))));
+    });
+    const novo = el("input", { id: "px-new-" + slug, placeholder: "Novo próximo passo", "aria-label": "Novo próximo passo" });
+    const novoD = el("input", { id: "px-newd-" + slug, type: "date", class: "cell px-date", "aria-label": "Prazo do novo passo" });
+    const add = () => { const v = novo.value.trim(); if (!v) return; const it = { id: "p" + Date.now().toString(36), texto: v, prazo: novoD.value || "", feito: false, criadoEm: new Date().toISOString() }; novo.value = ""; novoD.value = ""; saveProx(slug, proxOf(slug).concat([it])); };
+    novo.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); add(); } });
+    const abertos = itens.filter((p) => !p.feito).length;
+    return el("div", { class: "sblock px" },
+      el("div", { class: "bh" }, el("h4", {}, "Próximos passos"), el("span", { class: "chip" }, abertos + " em aberto")),
+      rows.length ? el("div", { class: "px-list" }, rows) : el("div", { class: "sugg" }, "Nenhum próximo passo ainda."),
+      el("div", { class: "addrow" }, novo, novoD, el("button", { class: "btn", type: "button", onclick: add }, "Adicionar")),
+      el("div", { class: "foot" }, el("span", { id: "px-saved-" + slug, class: "saved", "aria-live": "polite" })));
+  }
+  function proxOverview() {
+    const linhas = cfgClients().map((c) => ({ c, abertos: proxOf(c.slug).filter((p) => !p.feito).sort(proxOrd) })).filter((x) => x.abertos.length);
+    if (!linhas.length) return null;
+    return el("section", { class: "block" }, el("h2", {}, "Próximos passos"),
+      el("div", { class: "tcard scroll" }, el("table", { class: "t" },
+        el("thead", {}, el("tr", {}, el("th", {}, "Cliente"), el("th", {}, "Próximo passo"), el("th", {}, "Prazo"), el("th", { class: "n" }, "Em aberto"))),
+        el("tbody", {}, linhas.map(({ c, abertos }) => el("tr", { class: "click", tabindex: "0", onclick: () => go({ cli: c.slug }), onkeydown: (e) => { if (e.key === "Enter") go({ cli: c.slug }); } },
+          el("td", {}, el("b", {}, c.nome)), el("td", {}, abertos[0].texto),
+          el("td", { class: abertos[0].prazo && abertos[0].prazo < today() ? "px-latecell" : "" }, abertos[0].prazo ? fmtDate(abertos[0].prazo) + " · " + prazoTxt(abertos[0].prazo) : "—"),
+          el("td", { class: "n" }, abertos.length)))))));
+  }
+
   function viewEstrategia() {
     const cli = state.cli; const fs = frentesDa("estrategia");
     const theme = state.cfg && state.cfg.temas ? el("div", { class: "theme" }, el("span", { class: "sugg" }, "Tema de " + (state.cfg.temasPeriodo || "agora") + ", pra tudo falar a mesma língua:"), el("b", {}, state.cfg.temas)) : null;
-    if (!cli) return [theme, metaTable(""), overview(fs, "Estratégias do mês por cliente")];
+    if (!cli) return [theme, metaTable(""), proxOverview(), overview(fs, "Estratégias do mês por cliente")];
     const mine = fs.filter((f) => inFrente(f, cli));
     return [theme, metaTable(cli),
       el("section", { class: "block" }, el("h2", {}, "Estratégia do mês"),
-        mine.length ? el("div", { class: "steps" }, mine.map((f) => stepBlock(f, cli))) : el("div", { class: "empty" }, "Nenhuma estratégia ligada a este cliente ainda."),
+        el("div", { class: "steps" }, mine.map((f) => stepBlock(f, cli)), proxBlock(cli)),
+        mine.length ? null : el("div", { class: "sugg" }, "Nenhuma estratégia ligada a este cliente ainda."),
         joinButtons(fs, cli))];
   }
   function viewTrafego() {
@@ -2036,6 +2101,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("roteiros").onSnapshot((s) => { state.roteiros = listOf(s); render(); }, onErr);
     db.collection("pedidos").onSnapshot((s) => { state.pedidos = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ped-"))) render(); }, onErr);
     db.collection("prompts").onSnapshot((s) => { state.prompts = listOf(s); render(); }, onErr);
+    db.collection("proximos").onSnapshot((s) => { state.proximos = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("px-"))) render(); }, onErr);
     db.collection("estrutura").onSnapshot((s) => { state.estrutura = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("cf-"))) render(); }, onErr);
     db.collection("calendarios").onSnapshot((s) => { state.calendarios = listOf(s); render(); }, onErr);
     db.doc("config/dicionario").onSnapshot((s) => { state.dicio = s.exists ? s.data() : null; }, onErr);
