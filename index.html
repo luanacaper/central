@@ -7,7 +7,7 @@
 <link rel="icon" href="https://negocioscreators.com/marca/nc-icone-32.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#5A3A2E">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Central NC">
@@ -47,13 +47,6 @@
   --brand-cream: #F3EBDF; --brand-mostarda: #C99A2E;
   --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "Bricolage Grotesque", system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #241913; --surface: #33241C; --surface-2: #402E25; --ink: #F3EBDF; --muted: #CBB6A6; --line: #4E392E;
-    --mint: #E07B52; --orange: #D9AE4A; --on-mint: #241913; --ok: #A9BE94; --warn: #D9AE4A; --bad: #E5735B; --na: #7D6A5E;
-    --ok-soft: #2E3426; --warn-soft: #3A2E16; --bad-soft: #432219; --shadow: none; --rail: #1A120D; --rail-2: #33241C; color-scheme: dark;
-  }
 }
 :root[data-theme="dark"] {
   --bg: #241913; --surface: #33241C; --surface-2: #402E25; --ink: #F3EBDF; --muted: #CBB6A6; --line: #4E392E;
@@ -414,6 +407,12 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .est-adrow { align-items: end; grid-template-columns: 2fr 2fr auto; }
 @media (max-width: 560px) { .est-dl { grid-template-columns: 1fr; } .est-dl dt { margin-top: 4px; } .est-adrow { grid-template-columns: 1fr; } }
 
+/* Celular: fundo branco, caixas neutras (pedido da Luana, 15/11) */
+@media (max-width: 860px) {
+  :root:not([data-theme="dark"]) { --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F3F2F0; --line: #E6E3DF; --muted: #77706B; --ink: #3A2C25; --shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .topbar { background: rgba(255,255,255,.94); }
+  .ag-col.hoje { box-shadow: none; }
+}
 /* Calendário geral (agenda) */
 .ag-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
 .ag-nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -425,13 +424,17 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .ag-col h3 span:last-child { color: var(--ink); font-size: 15px; letter-spacing: 0; }
 .ag-col.hoje h3 span:last-child { color: var(--mint); }
 .ag-col input.ag-quick { width: 100%; border: 1px dashed var(--line); border-radius: 8px; background: transparent; padding: 5px 7px; font-size: 13px; }
-.ag-it { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: start; padding: 6px 7px; border-radius: 9px; background: var(--surface-2); font-size: 13px; line-height: 1.3; min-width: 0; border-left: 3px solid var(--mint); }
+.ag-it { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: start; padding: 6px 7px; border-radius: 9px; background: var(--surface-2); font-size: 13px; line-height: 1.3; min-width: 0; border-left: 3px solid var(--mint); }
 .ag-it.f-proximo { border-left-color: var(--brand-mostarda, #C99A2E); }
 .ag-it.f-post { border-left-color: var(--brand-mint, #9CAF88); }
 .ag-it.feito { opacity: .55; } .ag-it.feito .ag-t { text-decoration: line-through; }
 .ag-it.atrasada { background: var(--bad-soft); }
 .ag-it input[type=checkbox] { margin: 2px 0 0; width: 15px; height: 15px; accent-color: var(--mint); }
 .ag-it button.ag-t { all: unset; cursor: pointer; overflow-wrap: anywhere; font-weight: 600; }
+.ag-it .ag-x { border: 0; background: none; color: var(--muted); font-size: 14px; padding: 0 2px; line-height: 1; cursor: pointer; opacity: .7; }
+.ag-it .ag-x:hover { color: var(--bad); opacity: 1; }
+.ag-it .ag-x[data-armed] { color: var(--bad); opacity: 1; font-size: 12px; font-weight: 800; }
+.ag-turnos { display: flex; flex-wrap: wrap; gap: 6px; }
 .ag-it small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 600; }
 .ag-it .ag-h { font-family: var(--font-mono); font-weight: 800; color: var(--mint); margin-right: 4px; }
 .ag-month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--line); gap: 1px; }
@@ -1743,13 +1746,21 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   function agItens(de, ate) {
     const dentro = (d) => d && d >= de && d <= ate;
     const out = [];
-    state.agenda.forEach((a) => { if (dentro(a.data)) out.push({ fonte: "agenda", id: a.id, titulo: a.titulo || "Sem título", data: a.data, hora: a.hora || "", cliente: a.cliente || "", principal: !!a.principal, feito: !!a.feito, notas: a.notas || "", raw: a }); });
+    state.agenda.forEach((a) => {
+      if (!a.data) return;
+      const fimP = a.dataFim && a.dataFim > a.data ? a.dataFim : a.data;
+      if (fimP < de || a.data > ate) return;
+      let d = a.data < de ? de : a.data; const ult = fimP > ate ? ate : fimP;
+      for (let k = 0; d <= ult && k < 400; k++, d = addD(d, 1))
+        out.push({ fonte: "agenda", id: a.id, titulo: a.titulo || "Sem título", data: d, ini: a.data, fim: fimP, hora: faixaHora(a), cliente: a.cliente || "", principal: !!a.principal, feito: !!a.feito, notas: a.notas || "", raw: a });
+    });
     Object.keys(state.proximos || {}).forEach((slug) => proxOf(slug).forEach((p, i) => { if (dentro(p.prazo)) out.push({ fonte: "proximo", id: slug + ":" + i, idx: i, titulo: p.texto || "Próximo passo", data: p.prazo, hora: "", cliente: slug, principal: true, feito: !!p.feito }); }));
     if (state.agPost) (state.calendarios || []).forEach((c) => (c.itens || []).forEach((it) => { if (dentro(it.data)) out.push({ fonte: "post", id: c.id + ":" + it.id, titulo: it.pauta || it.formato || "Post", data: it.data, hora: it.hora || "", cliente: c.cliente || "", principal: false, feito: /postad|publicad/i.test(it.status || "") }); }));
     return out.filter((x) => !state.agCli || x.cliente === state.agCli)
       .sort((a, b) => a.data.localeCompare(b.data) || (a.feito ? 1 : 0) - (b.feito ? 1 : 0) || (a.hora || "99").localeCompare(b.hora || "99") || a.titulo.localeCompare(b.titulo, "pt-BR"));
   }
-  const agHoje = () => { const t = today(); return state.agenda.filter((a) => a.data === t && !a.feito).concat(Object.keys(state.proximos || {}).flatMap((s) => proxOf(s).filter((p) => p.prazo === t && !p.feito))); };
+  const faixaHora = (a) => a.hora ? a.hora + (a.horaFim ? "–" + a.horaFim : "") : "";
+  const agHoje = () => { const t = today(); return state.agenda.filter((a) => a.data && !a.feito && a.data <= t && (a.dataFim && a.dataFim > a.data ? a.dataFim : a.data) >= t).concat(Object.keys(state.proximos || {}).flatMap((s) => proxOf(s).filter((p) => p.prazo === t && !p.feito))); };
   async function agToggle(x, v) {
     try {
       if (x.fonte === "agenda") await db.collection("agenda").doc(x.id).update({ feito: v, feitoEm: v ? new Date().toISOString() : "" });
@@ -1758,34 +1769,47 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   }
   async function agQuick(data, titulo, principal) {
     titulo = titulo.trim(); if (!titulo) return;
-    const m = titulo.match(/^(\d{1,2})[:h](\d{2})?\s+(.+)$/i);  // "14h reunião" ou "14:30 reunião"
-    const hora = m ? pad(+m[1]) + ":" + (m[2] || "00") : "";
+    // "14h reunião", "14:30 reunião", "14h-16h reunião", "manhã reunião"
+    let hora = "", horaFim = "";
+    const m = titulo.match(/^(\d{1,2})[:h](\d{2})?(?:\s*(?:-|–|às|a)\s*(\d{1,2})[:h]?(\d{2})?)?\s+(.+)$/i);
+    const tn = titulo.match(/^(manh[ãa]|tarde|noite)\s+(.+)$/i);
+    if (m) { hora = pad(+m[1]) + ":" + (m[2] || "00"); if (m[3]) horaFim = pad(+m[3]) + ":" + (m[4] || "00"); titulo = m[5]; }
+    else if (tn) { const T = { manha: ["08:00", "12:00"], tarde: ["13:00", "18:00"], noite: ["19:00", "22:00"] }[tn[1].toLowerCase().replace("ã", "a")]; hora = T[0]; horaFim = T[1]; titulo = tn[2]; }
     const agora = new Date().toISOString();
-    try { await db.collection("agenda").add({ titulo: m ? m[3] : titulo, data, hora, cliente: state.agCli || "", principal: !!principal, feito: false, notas: "", criadoEm: agora, editadoEm: agora }); } catch (e) { fail(e); }
+    try { await db.collection("agenda").add({ titulo, data, dataFim: "", hora, horaFim, cliente: state.agCli || "", principal: !!principal, feito: false, notas: "", criadoEm: agora, editadoEm: agora }); } catch (e) { fail(e); }
   }
   function agItem(x, opts) {
     const hoje = today();
-    const cls = "ag-it f-" + x.fonte + (x.feito ? " feito" : "") + (!x.feito && x.data < hoje && x.fonte !== "post" ? " atrasada" : "");
+    const cls = "ag-it f-" + x.fonte + (x.feito ? " feito" : "") + (!x.feito && (x.fim || x.data) < hoje && x.fonte !== "post" ? " atrasada" : "");
     const abrir = () => { if (x.fonte === "agenda") { state.agEdit = x.id; render(); } else if (x.fonte === "proximo") go({ aba: "estrategia", cli: x.cliente }); else go({ aba: "calendario", cli: x.cliente }); };
-    const sub = [x.cliente ? cliName(x.cliente) : "", x.fonte === "proximo" ? "próximo passo" : x.fonte === "post" ? "postagem" : "", opts && opts.data ? DSEM[dOf(x.data).getDay()] + " " + fmtDate(x.data) : "", x.principal && x.fonte === "agenda" ? "★ principal" : ""].filter(Boolean).join(" · ");
+    const sub = [x.cliente ? cliName(x.cliente) : "", x.fonte === "proximo" ? "próximo passo" : x.fonte === "post" ? "postagem" : "", opts && opts.data ? DSEM[dOf(x.data).getDay()] + " " + fmtDate(x.data) : "", x.fim && x.fim !== x.ini ? "período " + fmtDate(x.ini) + " a " + fmtDate(x.fim) : "", x.principal && x.fonte === "agenda" ? "★ principal" : ""].filter(Boolean).join(" · ");
     return el("div", { class: cls },
       x.fonte === "post" ? el("span", { style: "width:15px" }) : el("input", { type: "checkbox", checked: x.feito, "aria-label": "Feito: " + x.titulo, onchange: (e) => agToggle(x, e.target.checked) }),
       el("div", { style: "min-width:0" }, el("button", { class: "ag-t", type: "button", onclick: abrir }, x.hora ? el("span", { class: "ag-h" }, x.hora) : null, x.titulo),
-        sub ? el("small", {}, sub) : null, opts && opts.notas && x.notas ? el("small", { style: "white-space:pre-wrap;font-weight:400" }, x.notas) : null));
+        sub ? el("small", {}, sub) : null, opts && opts.notas && x.notas ? el("small", { style: "white-space:pre-wrap;font-weight:400" }, x.notas) : null),
+      x.fonte === "agenda" ? el("button", { class: "ag-x", type: "button", title: "Excluir atividade", "aria-label": "Excluir " + x.titulo, onclick: (e) => agExcluir(e.currentTarget, x) }, "🗑") : el("span"));
+  }
+  function agExcluir(b, x) {  // 1º toque arma ("Excluir?"), 2º toque apaga
+    if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Excluir?"; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "🗑"; } }, 3000); return; }
+    db.collection("agenda").doc(x.id).delete().catch(fail);
   }
   function agForm(a) {
     const novo = !a || !a.id; a = a || {};
     const fid = "ag-f-";
     const t = el("input", { id: fid + "t", value: a.titulo || "", placeholder: "O que precisa ser feito" });
     const d = el("input", { id: fid + "d", type: "date", value: a.data || agRef() });
+    const df = el("input", { id: fid + "df", type: "date", value: a.dataFim || "" });
     const h = el("input", { id: fid + "h", type: "time", value: a.hora || "" });
+    const hf = el("input", { id: fid + "hf", type: "time", value: a.horaFim || "" });
+    const turno = (n, i, f) => el("button", { class: "chip", type: "button", onclick: () => { h.value = i; hf.value = f; } }, n);
     const c = el("select", { id: fid + "c" }, el("option", { value: "" }, "Negócios Creators (geral)"), cfgClients().map((x) => el("option", { value: x.slug }, x.nome))); c.value = a.cliente || state.agCli || "";
     const p = el("input", { id: fid + "p", type: "checkbox", checked: novo ? state.agView === "semana" : !!a.principal });
     const n = el("textarea", { id: fid + "n", style: "min-height:70px" }); n.value = a.notas || "";
     const salvar = async () => {
       if (!d.value) { d.focus(); return; }
       const agora = new Date().toISOString();
-      const body = { titulo: t.value.trim() || "Sem título", data: d.value, hora: h.value || "", cliente: c.value, principal: p.checked, notas: n.value, editadoEm: agora };
+      const fimD = df.value && df.value > d.value ? df.value : "";
+      const body = { titulo: t.value.trim() || "Sem título", data: d.value, dataFim: fimD, hora: h.value || "", horaFim: h.value && hf.value && hf.value > h.value ? hf.value : "", cliente: c.value, principal: p.checked, notas: n.value, editadoEm: agora };
       try {
         if (novo) await db.collection("agenda").add(Object.assign({ feito: false, criadoEm: agora }, body));
         else await db.collection("agenda").doc(a.id).update(body);
@@ -1797,9 +1821,13 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     return el("div", { class: "lcard editing", style: "padding:14px;display:grid;gap:12px" },
       el("div", { class: "fields" },
         el("div", { class: "field", style: "grid-column: 1 / -1" }, el("label", { for: fid + "t" }, "Atividade"), t),
-        el("div", { class: "field" }, el("label", { for: fid + "d" }, "Dia"), d),
-        el("div", { class: "field" }, el("label", { for: fid + "h" }, "Hora (opcional)"), h),
+        el("div", { class: "field" }, el("label", { for: fid + "d" }, "Dia (ou início)"), d),
+        el("div", { class: "field" }, el("label", { for: fid + "df" }, "Até o dia (período, opcional)"), df),
+        el("div", { class: "field" }, el("label", { for: fid + "h" }, "Hora início"), h),
+        el("div", { class: "field" }, el("label", { for: fid + "hf" }, "Hora fim"), hf),
         el("div", { class: "field" }, el("label", { for: fid + "c" }, "Cliente / frente"), c)),
+      el("div", { class: "ag-turnos" }, el("span", { class: "sugg", style: "align-self:center" }, "Período do dia:"),
+        turno("Manhã", "08:00", "12:00"), turno("Tarde", "13:00", "18:00"), turno("Noite", "19:00", "22:00"), turno("Dia todo", "", "")),
       el("label", { style: "display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px" }, p, "★ Demanda principal da semana"),
       el("div", { class: "field" }, el("label", { for: fid + "n" }, "Anotações"), n),
       el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center" },
@@ -1857,7 +1885,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     const atras = d === hoje ? agItens(addD(hoje, -30), addD(hoje, -1)).filter((x) => !x.feito && x.fonte !== "post") : [];
     return el("div", { class: "ag-dayview" },
       its.length ? its.map((x) => agItem(x, { notas: true })) : el("div", { class: "empty" }, "Nada marcado para este dia."),
-      agQuickInput(d, false, "+ adicionar (ex.: 14h reunião com a Fast)"),
+      agQuickInput(d, false, "+ adicionar (ex.: 14h-16h reunião, manhã gravar)"),
       atras.length ? el("h2", { style: "margin:14px 0 0" }, "Atrasadas (" + atras.length + ")") : null,
       atras.map((x) => agItem(x, { data: true })));
   }
