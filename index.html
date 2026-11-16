@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <link rel="icon" href="https://negocioscreators.com/marca/nc-icone-32.png">
-<link rel="apple-touch-icon" href="https://negocioscreators.com/marca/nc-icone-180.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#5A3A2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Central NC">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(function () {});</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Central Negócios Creators</title>
@@ -406,6 +413,49 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .est-ads { display: grid; gap: 8px; }
 .est-adrow { align-items: end; grid-template-columns: 2fr 2fr auto; }
 @media (max-width: 560px) { .est-dl { grid-template-columns: 1fr; } .est-dl dt { margin-top: 4px; } .est-adrow { grid-template-columns: 1fr; } }
+
+/* Calendário geral (agenda) */
+.ag-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.ag-nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.ag-nav b { font-size: 17px; min-width: 150px; text-transform: capitalize; }
+.ag-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.ag-col { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px; display: grid; align-content: start; gap: 6px; min-height: 120px; min-width: 0; }
+.ag-col.hoje { border-color: var(--mint); box-shadow: 0 0 0 1px var(--mint) inset; }
+.ag-col h3 { margin: 0; font-size: 12px; font-weight: 800; color: var(--muted); display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: .04em; }
+.ag-col h3 span:last-child { color: var(--ink); font-size: 15px; letter-spacing: 0; }
+.ag-col.hoje h3 span:last-child { color: var(--mint); }
+.ag-col input.ag-quick { width: 100%; border: 1px dashed var(--line); border-radius: 8px; background: transparent; padding: 5px 7px; font-size: 13px; }
+.ag-it { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: start; padding: 6px 7px; border-radius: 9px; background: var(--surface-2); font-size: 13px; line-height: 1.3; min-width: 0; border-left: 3px solid var(--mint); }
+.ag-it.f-proximo { border-left-color: var(--brand-mostarda, #C99A2E); }
+.ag-it.f-post { border-left-color: var(--brand-mint, #9CAF88); }
+.ag-it.feito { opacity: .55; } .ag-it.feito .ag-t { text-decoration: line-through; }
+.ag-it.atrasada { background: var(--bad-soft); }
+.ag-it input[type=checkbox] { margin: 2px 0 0; width: 15px; height: 15px; accent-color: var(--mint); }
+.ag-it button.ag-t { all: unset; cursor: pointer; overflow-wrap: anywhere; font-weight: 600; }
+.ag-it small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 600; }
+.ag-it .ag-h { font-family: var(--font-mono); font-weight: 800; color: var(--mint); margin-right: 4px; }
+.ag-month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--line); gap: 1px; }
+.ag-month .wd { background: var(--surface-2); text-align: center; font-size: 11px; font-weight: 800; color: var(--muted); padding: 6px 0; text-transform: uppercase; }
+.ag-day { background: var(--surface); min-height: 96px; padding: 5px; display: grid; align-content: start; gap: 3px; min-width: 0; cursor: pointer; border: 0; text-align: left; font: inherit; color: inherit; }
+.ag-day.fora { background: var(--bg); color: var(--muted); }
+.ag-day .n { font-size: 12px; font-weight: 800; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; }
+.ag-day.hoje .n { background: var(--mint); color: var(--on-mint); }
+.ag-day .mi { font-size: 11.5px; line-height: 1.25; padding: 2px 5px; border-radius: 5px; background: var(--surface-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 2px solid var(--mint); }
+.ag-day .mi.f-proximo { border-left-color: #C99A2E; } .ag-day .mi.f-post { border-left-color: #9CAF88; } .ag-day .mi.feito { text-decoration: line-through; opacity: .6; }
+.ag-day .mais { font-size: 11px; color: var(--muted); font-weight: 700; }
+.ag-dayview { display: grid; gap: 8px; max-width: 720px; }
+.ag-dayview .ag-it { font-size: 15px; padding: 10px 12px; }
+.ag-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); align-items: center; }
+.ag-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.ag-push { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 13px; }
+@media (max-width: 860px) {
+  .ag-week { grid-template-columns: 1fr; }
+  .ag-col { min-height: 0; }
+  .ag-day { min-height: 58px; padding: 3px; }
+  .ag-day .mi { font-size: 0; padding: 0; height: 5px; border-left-width: 0; background: var(--mint); }
+  .ag-day .mi.f-proximo { background: #C99A2E; } .ag-day .mi.f-post { background: #9CAF88; }
+  .ag-day .mais { font-size: 10px; }
+}
 .senha-fundo { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(58,38,30,.55); padding: 16px; }
 .senha-fundo .login { margin: 0; width: min(420px, 100%); }
 .rail-sessao { padding: 0 10px; color: var(--rail-muted); font-size: 12px; }
@@ -515,6 +565,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     calendario: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     campanhas: '<rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="6" y="11" width="15" height="4" rx="1.5"/><rect x="9" y="17" width="12" height="4" rx="1.5"/><path d="M4.5 9v8.5H9M4.5 13H6"/>',
     prompts: '<path d="M5 4h14v12H9l-4 4z"/><path d="M9 9h6M9 12h4"/>',
+    agenda: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z" fill="currentColor"/>',
     todos: '<path d="M4 6h16M4 12h16M4 18h10"/>'
   };
   const icon = (k) => { const n = document.createElementNS("http://www.w3.org/2000/svg", "svg"); n.setAttribute("viewBox", "0 0 24 24"); n.setAttribute("class", "i"); n.setAttribute("aria-hidden", "true"); n.innerHTML = ICONS[k] || ""; return n; };
@@ -523,7 +574,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), proximos: {}, estrutura: {}, campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
+  const state = { agenda: [], agView: (() => { try { return localStorage.getItem("agView") || "semana"; } catch (e) { return "semana"; } })(), agData: "", agEdit: "", agCli: "", agPost: false, cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), proximos: {}, estrutura: {}, campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -587,13 +638,15 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   };
 
   try { state.aba = localStorage.getItem("aba2") || "estrategia"; state.cli = localStorage.getItem("cli2") || ""; } catch (e) {}
-  { const h = (location.hash || "").slice(1); if (h === "prompts" || ABAS.some(([k]) => k === h)) state.aba = h; }
-  if (state.aba !== "prompts" && !ABAS.some(([k]) => k === state.aba)) state.aba = "estrategia";
+  const TOOLS = ["agenda", "prompts"];
+  { const h = (location.hash || "").slice(1); if (TOOLS.includes(h) || ABAS.some(([k]) => k === h)) state.aba = h; }
+  if (!TOOLS.includes(state.aba) && !ABAS.some(([k]) => k === state.aba)) state.aba = "estrategia";
   function go(patch) {
     Object.assign(state, patch);
     try { localStorage.setItem("aba2", state.aba); localStorage.setItem("cli2", state.cli); } catch (e) {}
     render(); window.scrollTo({ top: 0 });
   }
+  window.addEventListener("hashchange", () => { const h = (location.hash || "").slice(1); if (TOOLS.includes(h) || ABAS.some(([k]) => k === h)) go({ aba: h }); });
 
   function renderNav() {
     const narrow = window.matchMedia && window.matchMedia("(max-width: 860px)").matches;
@@ -611,16 +664,18 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       const st = slug ? clientStatus(slug) : { s: "none", pend: state.pend.filter((p) => p.status !== "resolvida").length };
       const av = slug ? el("span", { class: "av", style: "background:" + AVC[idx % AVC.length] }, initials(nome), el("span", { class: "st s-" + st.s }))
         : el("span", { class: "av", style: "background:var(--rail-2)" }, icon("todos"));
-      return el("button", { class: "cbtn", "aria-current": String(state.aba !== "prompts" && state.cli === slug), onclick: () => go({ cli: slug, aba: state.aba === "prompts" ? "estrategia" : state.aba }) },
+      return el("button", { class: "cbtn", "aria-current": String(!TOOLS.includes(state.aba) && state.cli === slug), onclick: () => go({ cli: slug, aba: TOOLS.includes(state.aba) ? "estrategia" : state.aba }) },
         av, el("span", {}, nome, sub ? el("small", {}, sub) : null),
         st.pend ? el("span", { class: "badge", title: st.pend + " pendência(s) suas" }, st.pend) : el("span"));
     };
     const list = () => [btn("", "Visão geral", "todos os clientes", 0), ...cfgClients().map((c, i) => btn(c.slug, c.nome, c.dona ? "sua empresa" : null, i))];
     $("#side").replaceChildren(...list(), el("div", { class: "addrow", style: "margin-top:10px" }, addIn, el("button", { class: "btn", type: "button", onclick: add }, "+")));
-    const tool = () => el("button", { class: "cbtn", "aria-current": String(state.aba === "prompts"), onclick: () => go({ aba: "prompts" }) },
-      el("span", { class: "av", style: "background:var(--rail-2)" }, icon("prompts")), el("span", {}, "Prompts", el("small", {}, state.prompts.length + " salvos")), el("span"));
-    $("#tools").replaceChildren(tool());
-    $("#mside").replaceChildren(...list(), tool());
+    const hojeN = agHoje().length;
+    const tool = (k, nome, sub, badge) => el("button", { class: "cbtn", "aria-current": String(state.aba === k), onclick: () => go({ aba: k }) },
+      el("span", { class: "av", style: "background:var(--rail-2)" }, icon(k)), el("span", {}, nome, el("small", {}, sub)), badge ? el("span", { class: "badge", title: badge + " atividade(s) hoje" }, badge) : el("span"));
+    const tools = () => [tool("agenda", "Calendário geral", hojeN ? hojeN + " hoje" : "agenda da semana", hojeN), tool("prompts", "Prompts", state.prompts.length + " salvos")];
+    $("#tools").replaceChildren(...tools());
+    $("#mside").replaceChildren(...tools(), ...list());
   }
 
   /* ---------- Meta da Negócios Creators ---------- */
@@ -1679,6 +1734,202 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         : el("div", { class: "empty" }, state.prompts.length ? "Nenhum prompt com esse filtro." : "Nenhum prompt ainda. Clique em + Prompt.")];
   }
 
+  /* ---------- Calendário geral (agenda) ---------- */
+  const DSEM_L = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  const dOf = (iso) => new Date(iso + "T12:00:00");
+  const addD = (iso, n) => { const d = dOf(iso); d.setDate(d.getDate() + n); return isoOf(d); };
+  const domingoDe = (iso) => addD(iso, -dOf(iso).getDay());
+  const agRef = () => state.agData || today();
+  function agItens(de, ate) {
+    const dentro = (d) => d && d >= de && d <= ate;
+    const out = [];
+    state.agenda.forEach((a) => { if (dentro(a.data)) out.push({ fonte: "agenda", id: a.id, titulo: a.titulo || "Sem título", data: a.data, hora: a.hora || "", cliente: a.cliente || "", principal: !!a.principal, feito: !!a.feito, notas: a.notas || "", raw: a }); });
+    Object.keys(state.proximos || {}).forEach((slug) => proxOf(slug).forEach((p, i) => { if (dentro(p.prazo)) out.push({ fonte: "proximo", id: slug + ":" + i, idx: i, titulo: p.texto || "Próximo passo", data: p.prazo, hora: "", cliente: slug, principal: true, feito: !!p.feito }); }));
+    if (state.agPost) (state.calendarios || []).forEach((c) => (c.itens || []).forEach((it) => { if (dentro(it.data)) out.push({ fonte: "post", id: c.id + ":" + it.id, titulo: it.pauta || it.formato || "Post", data: it.data, hora: it.hora || "", cliente: c.cliente || "", principal: false, feito: /postad|publicad/i.test(it.status || "") }); }));
+    return out.filter((x) => !state.agCli || x.cliente === state.agCli)
+      .sort((a, b) => a.data.localeCompare(b.data) || (a.feito ? 1 : 0) - (b.feito ? 1 : 0) || (a.hora || "99").localeCompare(b.hora || "99") || a.titulo.localeCompare(b.titulo, "pt-BR"));
+  }
+  const agHoje = () => { const t = today(); return state.agenda.filter((a) => a.data === t && !a.feito).concat(Object.keys(state.proximos || {}).flatMap((s) => proxOf(s).filter((p) => p.prazo === t && !p.feito))); };
+  async function agToggle(x, v) {
+    try {
+      if (x.fonte === "agenda") await db.collection("agenda").doc(x.id).update({ feito: v, feitoEm: v ? new Date().toISOString() : "" });
+      else if (x.fonte === "proximo") { const slug = x.cliente; const its = proxOf(slug).map((p) => Object.assign({}, p)); its[x.idx].feito = v; its[x.idx].feitoEm = v ? today() : ""; await saveProx(slug, its); }
+    } catch (e) { fail(e); }
+  }
+  async function agQuick(data, titulo, principal) {
+    titulo = titulo.trim(); if (!titulo) return;
+    const m = titulo.match(/^(\d{1,2})[:h](\d{2})?\s+(.+)$/i);  // "14h reunião" ou "14:30 reunião"
+    const hora = m ? pad(+m[1]) + ":" + (m[2] || "00") : "";
+    const agora = new Date().toISOString();
+    try { await db.collection("agenda").add({ titulo: m ? m[3] : titulo, data, hora, cliente: state.agCli || "", principal: !!principal, feito: false, notas: "", criadoEm: agora, editadoEm: agora }); } catch (e) { fail(e); }
+  }
+  function agItem(x, opts) {
+    const hoje = today();
+    const cls = "ag-it f-" + x.fonte + (x.feito ? " feito" : "") + (!x.feito && x.data < hoje && x.fonte !== "post" ? " atrasada" : "");
+    const abrir = () => { if (x.fonte === "agenda") { state.agEdit = x.id; render(); } else if (x.fonte === "proximo") go({ aba: "estrategia", cli: x.cliente }); else go({ aba: "calendario", cli: x.cliente }); };
+    const sub = [x.cliente ? cliName(x.cliente) : "", x.fonte === "proximo" ? "próximo passo" : x.fonte === "post" ? "postagem" : "", opts && opts.data ? DSEM[dOf(x.data).getDay()] + " " + fmtDate(x.data) : "", x.principal && x.fonte === "agenda" ? "★ principal" : ""].filter(Boolean).join(" · ");
+    return el("div", { class: cls },
+      x.fonte === "post" ? el("span", { style: "width:15px" }) : el("input", { type: "checkbox", checked: x.feito, "aria-label": "Feito: " + x.titulo, onchange: (e) => agToggle(x, e.target.checked) }),
+      el("div", { style: "min-width:0" }, el("button", { class: "ag-t", type: "button", onclick: abrir }, x.hora ? el("span", { class: "ag-h" }, x.hora) : null, x.titulo),
+        sub ? el("small", {}, sub) : null, opts && opts.notas && x.notas ? el("small", { style: "white-space:pre-wrap;font-weight:400" }, x.notas) : null));
+  }
+  function agForm(a) {
+    const novo = !a || !a.id; a = a || {};
+    const fid = "ag-f-";
+    const t = el("input", { id: fid + "t", value: a.titulo || "", placeholder: "O que precisa ser feito" });
+    const d = el("input", { id: fid + "d", type: "date", value: a.data || agRef() });
+    const h = el("input", { id: fid + "h", type: "time", value: a.hora || "" });
+    const c = el("select", { id: fid + "c" }, el("option", { value: "" }, "Negócios Creators (geral)"), cfgClients().map((x) => el("option", { value: x.slug }, x.nome))); c.value = a.cliente || state.agCli || "";
+    const p = el("input", { id: fid + "p", type: "checkbox", checked: novo ? state.agView === "semana" : !!a.principal });
+    const n = el("textarea", { id: fid + "n", style: "min-height:70px" }); n.value = a.notas || "";
+    const salvar = async () => {
+      if (!d.value) { d.focus(); return; }
+      const agora = new Date().toISOString();
+      const body = { titulo: t.value.trim() || "Sem título", data: d.value, hora: h.value || "", cliente: c.value, principal: p.checked, notas: n.value, editadoEm: agora };
+      try {
+        if (novo) await db.collection("agenda").add(Object.assign({ feito: false, criadoEm: agora }, body));
+        else await db.collection("agenda").doc(a.id).update(body);
+        state.agEdit = ""; render();
+      } catch (e) { fail(e); }
+    };
+    t.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); salvar(); } });
+    setTimeout(() => { if (novo && document.getElementById(fid + "t")) document.getElementById(fid + "t").focus(); }, 0);
+    return el("div", { class: "lcard editing", style: "padding:14px;display:grid;gap:12px" },
+      el("div", { class: "fields" },
+        el("div", { class: "field", style: "grid-column: 1 / -1" }, el("label", { for: fid + "t" }, "Atividade"), t),
+        el("div", { class: "field" }, el("label", { for: fid + "d" }, "Dia"), d),
+        el("div", { class: "field" }, el("label", { for: fid + "h" }, "Hora (opcional)"), h),
+        el("div", { class: "field" }, el("label", { for: fid + "c" }, "Cliente / frente"), c)),
+      el("label", { style: "display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px" }, p, "★ Demanda principal da semana"),
+      el("div", { class: "field" }, el("label", { for: fid + "n" }, "Anotações"), n),
+      el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center" },
+        el("button", { class: "btn primary", type: "button", onclick: salvar }, novo ? "Adicionar" : "Salvar"),
+        el("button", { class: "btn", type: "button", onclick: () => { state.agEdit = ""; render(); } }, "Cancelar"),
+        novo ? null : el("button", { class: "linkbtn", type: "button", style: "color:var(--bad);margin-left:auto", "data-label": "Apagar atividade", onclick: twoStep(async () => { try { await db.collection("agenda").doc(a.id).delete(); state.agEdit = ""; render(); } catch (e) { fail(e); } }) }, "Apagar atividade")));
+  }
+  function agQuickInput(data, principal, ph) {
+    const id = "ag-q-" + data + (principal ? "-p" : "");
+    const i = el("input", { id, class: "ag-quick", placeholder: ph || "+ adicionar", "aria-label": "Adicionar em " + fmtDate(data) });
+    i.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); const v = i.value; i.value = ""; agQuick(data, v, principal); } });
+    return i;
+  }
+  function agSemanaPrincipal() {
+    const dom = domingoDe(today()); const sab = addD(dom, 6); const hoje = today();
+    const its = agItens(dom, sab).filter((x) => x.principal);
+    const feitos = its.filter((x) => x.feito).length;
+    return el("section", { class: "block" },
+      el("div", { class: "ag-top" }, el("h2", { style: "margin:0" }, "★ Demandas principais da semana · " + fmtDate(dom) + " a " + fmtDate(sab)),
+        el("span", { class: "sugg" }, its.length ? feitos + " de " + its.length + " feitas" : "Marque ★ nas atividades mais importantes (ou digite direto no dia)")),
+      el("div", { class: "ag-week" }, [0, 1, 2, 3, 4, 5, 6].map((k) => {
+        const d = addD(dom, k); const doDia = its.filter((x) => x.data === d);
+        return el("div", { class: "ag-col" + (d === hoje ? " hoje" : "") },
+          el("h3", {}, el("span", {}, DSEM_L[k]), el("span", {}, fmtDate(d))),
+          doDia.map((x) => agItem(x)), agQuickInput(d, true, "+ demanda"));
+      })));
+  }
+  function agMes() {
+    const ref = agRef(); const ini = ref.slice(0, 8) + "01";
+    const d0 = domingoDe(ini); const fimMes = isoOf(new Date(dOf(ini).getFullYear(), dOf(ini).getMonth() + 1, 0));
+    const semanas = Math.ceil((Math.round((dOf(fimMes) - dOf(d0)) / 86400000) + 1) / 7);
+    const fim = addD(d0, semanas * 7 - 1); const its = agItens(d0, fim); const hoje = today();
+    const cells = [];
+    for (let k = 0; k < semanas * 7; k++) {
+      const d = addD(d0, k); const doDia = its.filter((x) => x.data === d);
+      cells.push(el("button", { class: "ag-day" + (d.slice(0, 7) !== ref.slice(0, 7) ? " fora" : "") + (d === hoje ? " hoje" : ""), type: "button", "aria-label": DSEM_L[dOf(d).getDay()] + " " + fmtDate(d) + ", " + doDia.length + " atividade(s)", onclick: () => { state.agData = d; state.agView = "dia"; try { localStorage.setItem("agView", "dia"); } catch (e) {} render(); } },
+        el("span", { class: "n" }, String(+d.slice(8))),
+        doDia.slice(0, 3).map((x) => el("span", { class: "mi f-" + x.fonte + (x.feito ? " feito" : "") }, (x.hora ? x.hora + " " : "") + x.titulo)),
+        doDia.length > 3 ? el("span", { class: "mais" }, "+" + (doDia.length - 3)) : null));
+    }
+    return el("div", { class: "ag-month" }, DSEM.map((w) => el("div", { class: "wd" }, w)), cells);
+  }
+  function agSemana() {
+    const dom = domingoDe(agRef()); const its = agItens(dom, addD(dom, 6)); const hoje = today();
+    return el("div", { class: "ag-week" }, [0, 1, 2, 3, 4, 5, 6].map((k) => {
+      const d = addD(dom, k);
+      return el("div", { class: "ag-col" + (d === hoje ? " hoje" : "") },
+        el("h3", {}, el("button", { class: "linkbtn", type: "button", style: "font-size:12px;text-transform:uppercase;color:inherit", onclick: () => { state.agData = d; state.agView = "dia"; render(); } }, DSEM_L[k]), el("span", {}, fmtDate(d))),
+        its.filter((x) => x.data === d).map((x) => agItem(x)), agQuickInput(d, false));
+    }));
+  }
+  function agDia() {
+    const d = agRef(); const hoje = today();
+    const its = agItens(d, d);
+    const atras = d === hoje ? agItens(addD(hoje, -30), addD(hoje, -1)).filter((x) => !x.feito && x.fonte !== "post") : [];
+    return el("div", { class: "ag-dayview" },
+      its.length ? its.map((x) => agItem(x, { notas: true })) : el("div", { class: "empty" }, "Nada marcado para este dia."),
+      agQuickInput(d, false, "+ adicionar (ex.: 14h reunião com a Fast)"),
+      atras.length ? el("h2", { style: "margin:14px 0 0" }, "Atrasadas (" + atras.length + ")") : null,
+      atras.map((x) => agItem(x, { data: true })));
+  }
+  function agTitulo() {
+    const ref = agRef();
+    if (state.agView === "mes") return MESES[+ref.slice(5, 7) - 1] + " " + ref.slice(0, 4);
+    if (state.agView === "semana") { const dom = domingoDe(ref); return fmtDate(dom) + " a " + fmtDate(addD(dom, 6)); }
+    return DSEM_L[dOf(ref).getDay()] + ", " + fmtDate(ref);
+  }
+  function agMover(n) {
+    const ref = agRef();
+    if (state.agView === "mes") { const x = dOf(ref.slice(0, 8) + "01"); x.setMonth(x.getMonth() + n); state.agData = isoOf(x); }
+    else state.agData = addD(ref, state.agView === "semana" ? 7 * n : n);
+    render();
+  }
+  /* avisos no celular (web push): a VPS manda o resumo do dia às 7h */
+  const VAPID_PUB = "BO15liAHqNjVZmk9ZQ67roBD5XmtvCng4ZC3BuOOnAmmofRHK8y36Mb1I8uwKPV-bpJpkeGeIPVYGbCbAi01QlA";
+  const ehApp = () => (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+  const ehIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  function b64u(s) { const p = "=".repeat((4 - s.length % 4) % 4); const r = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(r, (c) => c.charCodeAt(0)); }
+  async function agAtivarAvisos(btn) {
+    try {
+      btn.disabled = true; btn.textContent = "Ativando…";
+      const reg = await navigator.serviceWorker.ready;
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { btn.disabled = false; btn.textContent = "🔔 Ativar avisos"; state.agPushMsg = "O celular não deixou. Libere as notificações da Central nas configurações e tente de novo."; render(); return; }
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUB) });
+      const j = sub.toJSON();
+      const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(j.endpoint)))).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+      await db.collection("push").doc(hash).set({ sub: j, aparelho: navigator.userAgent.slice(0, 160), criadoEm: new Date().toISOString() });
+      try { localStorage.setItem("agPush", hash); } catch (e) {}
+      await reg.showNotification("Avisos ligados ✓", { body: "Todo dia às 7h chega aqui o que você tem marcado no Calendário geral.", icon: "icon-192.png", badge: "icon-192.png" });
+      state.agPushMsg = ""; render();
+    } catch (e) { btn.disabled = false; btn.textContent = "🔔 Ativar avisos"; state.agPushMsg = "Não deu para ativar agora (" + (e && e.message || e) + ")."; render(); }
+  }
+  function agPushBox() {
+    const temSW = "serviceWorker" in navigator && "PushManager" in window && location.protocol === "https:";
+    let ligado = false; try { ligado = !!localStorage.getItem("agPush") && Notification.permission === "granted"; } catch (e) {}
+    let txt, acao = null;
+    if (ehIOS() && !ehApp()) txt = "Para receber os avisos no iPhone: toque em Compartilhar → “Adicionar à Tela de Início”, abra a Central pelo ícone e ative aqui.";
+    else if (!temSW) txt = "Este navegador não recebe avisos. Abra pelo app da Central no celular (Chrome no Android ou ícone na tela de início no iPhone).";
+    else if (ligado) txt = "🔔 Avisos ligados neste aparelho: todo dia às 7h chega o resumo do que tem dia ou hora marcados.";
+    else { txt = "Receba todo dia às 7h o resumo do que tem dia ou hora marcados."; acao = el("button", { class: "btn primary", type: "button", onclick: (e) => agAtivarAvisos(e.currentTarget) }, "🔔 Ativar avisos"); }
+    return el("div", { class: "ag-push" }, el("span", { style: "flex:1;min-width:200px" }, txt), acao, state.agPushMsg ? el("span", { style: "color:var(--bad);flex-basis:100%" }, state.agPushMsg) : null);
+  }
+  function viewAgenda() {
+    const setV = (v) => { state.agView = v; try { localStorage.setItem("agView", v); } catch (e) {} render(); };
+    const editando = state.agEdit === "novo" ? agForm(null) : state.agEdit ? agForm(state.agenda.find((a) => a.id === state.agEdit) || null) : null;
+    const cli = el("select", { "aria-label": "Filtrar por cliente", style: "border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:7px 10px;font-size:14px", onchange: (e) => { state.agCli = e.target.value; render(); } },
+      el("option", { value: "" }, "Todos os clientes"), cfgClients().map((x) => el("option", { value: x.slug }, x.nome))); cli.value = state.agCli || "";
+    return [
+      agPushBox(),
+      agSemanaPrincipal(),
+      el("section", { class: "block", style: "margin-top:8px" },
+        el("div", { class: "ag-top" },
+          el("div", { class: "ag-nav" },
+            el("div", { class: "seg" }, [["mes", "Mês"], ["semana", "Semana"], ["dia", "Dia"]].map(([k, n]) => el("button", { type: "button", "aria-pressed": String(state.agView === k), onclick: () => setV(k) }, n))),
+            el("button", { class: "btn", type: "button", "aria-label": "Anterior", onclick: () => agMover(-1) }, "‹"),
+            el("button", { class: "btn", type: "button", onclick: () => { state.agData = ""; render(); } }, "Hoje"),
+            el("button", { class: "btn", type: "button", "aria-label": "Próximo", onclick: () => agMover(1) }, "›"),
+            el("b", {}, agTitulo())),
+          el("div", { class: "ag-nav" }, cli,
+            el("button", { class: "btn primary", type: "button", onclick: () => { state.agEdit = "novo"; render(); } }, "+ Atividade"))),
+        editando,
+        el("div", { class: "ag-legend" },
+          el("span", {}, el("i", { style: "background:var(--mint)" }), "atividade"),
+          el("span", {}, el("i", { style: "background:#C99A2E" }), "próximo passo (Estratégia)"),
+          el("label", { style: "display:flex;gap:6px;align-items:center;cursor:pointer" }, el("input", { type: "checkbox", checked: !!state.agPost, onchange: (e) => { state.agPost = e.target.checked; render(); } }), el("i", { style: "background:#9CAF88" }), "mostrar postagens dos calendários")),
+        state.agView === "mes" ? agMes() : state.agView === "dia" ? agDia() : agSemana())];
+  }
+
   /* ---------- Calendário de postagem ---------- */
   const CAL_ST = ["Ideia", "A gravar", "Gravado", "Editando", "Editado", "Aprovado", "Teste no ar", "No feed", "Não passou", "Feito"];
   const CAL_CLS = { "Ideia": "", "Editado": "s-ok", "A gravar": "", "Gravado": "s-warn", "Editando": "s-warn", "Aprovado": "s-ok", "Teste no ar": "s-warn", "No feed": "s-ok", "Não passou": "s-bad", "Feito": "s-ok" };
@@ -2064,9 +2315,9 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   function renderNow() {
     if (state.cli && state.cfg && !cfgClients().some((c) => c.slug === state.cli)) state.cli = "";
     renderNav(); renderSide(); renderGoal();
-    const aba = state.aba; const titulo = aba === "prompts" ? "Prompts" : (ABAS.find(([k]) => k === aba) || [])[1];
-    const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, aba === "prompts" ? "Biblioteca da Negócios Creators" : state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
-    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "campanhas" ? viewCampanhas() : aba === "prompts" ? viewPrompts() : viewArea(aba);
+    const aba = state.aba; const titulo = aba === "prompts" ? "Prompts" : aba === "agenda" ? "Calendário geral" : (ABAS.find(([k]) => k === aba) || [])[1];
+    const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, aba === "prompts" ? "Biblioteca da Negócios Creators" : aba === "agenda" ? "Negócios Creators · todas as frentes" : state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
+    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "campanhas" ? viewCampanhas() : aba === "prompts" ? viewPrompts() : aba === "agenda" ? viewAgenda() : viewArea(aba);
     document.body.classList.toggle("wide", !!state.wide && aba === "planilhas" && !!state.cli);
     keepFocus(() => $("#main").replaceChildren(head, ...body.filter(Boolean)));
     document.querySelectorAll("textarea, input:not([type]), input[type=text]").forEach((e) => { e.spellcheck = true; e.lang = "pt-BR"; });
@@ -2096,6 +2347,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("roteiros").onSnapshot((s) => { state.roteiros = listOf(s); render(); }, onErr);
     db.collection("pedidos").onSnapshot((s) => { state.pedidos = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ped-"))) render(); }, onErr);
     db.collection("prompts").onSnapshot((s) => { state.prompts = listOf(s); render(); }, onErr);
+    db.collection("agenda").onSnapshot((s) => { state.agenda = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ag-"))) render(); }, onErr);
     db.collection("proximos").onSnapshot((s) => { state.proximos = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("px-"))) render(); }, onErr);
     db.collection("estrutura").onSnapshot((s) => { state.estrutura = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("cf-"))) render(); }, onErr);
     db.collection("calendarios").onSnapshot((s) => { state.calendarios = listOf(s); render(); }, onErr);
