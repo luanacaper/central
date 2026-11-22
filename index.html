@@ -1327,6 +1327,11 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const sdCfg = (slug) => Object.assign({}, SD_PADRAO, state.saldoscfg[slug] || {});
   const sdDoc = (slug) => state.saldos[slug] || null;
   const sdAddDias = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return isoOf(d); };
+  // Regra da Luana (22/11): se o dia em que o saldo fura o mínimo cair em sexta, sábado, domingo ou feriado, o aviso/pagamento vem antes (último dia útil seg–qui).
+  const SD_FERIADOS = new Set(["2026-01-01", "2026-02-16", "2026-02-17", "2026-04-03", "2026-04-21", "2026-05-01", "2026-06-04", "2026-09-07", "2026-10-12", "2026-11-02", "2026-11-15", "2026-11-20", "2026-12-25",
+    "2027-01-01", "2027-02-08", "2027-02-09", "2027-03-26", "2027-04-21", "2027-05-01", "2027-05-27", "2027-09-07", "2027-10-12", "2027-11-02", "2027-11-15", "2027-11-20", "2027-12-25"]);
+  const sdNaoUtil = (iso) => { const w = new Date(iso + "T12:00:00").getDay(); return w === 5 || w === 6 || w === 0 || SD_FERIADOS.has(iso); };
+  const sdAviso = (iso) => { let a = iso; if (sdNaoUtil(a)) { do { a = sdAddDias(a, -1); } while (sdNaoUtil(a)); } return a; };
   const sdId = () => Math.random().toString(36).slice(2, 9);
   async function sdSave(slug, patch, node) {
     const cur = sdCfg(slug);
@@ -1342,7 +1347,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     const parada = lidas.some((c) => c.status !== 1 || (c.prepago && c.saldo <= 1 && c.orcDia > 0));
     const imp = 1 + (numDot(cfg.imposto) || 0) / 100, min = numDot(cfg.minimo) || 0;
     // projeção: 60 dias, gasto = plano do dia (ou orçamento ativo), pagamentos entram descontando o imposto
-    const proj = []; let s = saldo, pagarAte = null, acabaEm = null;
+    const proj = []; let s = saldo, pagarAte = null, acabaEm = null, furaEm = null;
     for (let i = 0; i < 60; i++) {
       const dia = sdAddDias(today(), i);
       const prev = sdPlano(cfg, dia); const gasto = prev !== null ? prev : orc;
@@ -1350,7 +1355,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       const pag = (cfg.pagamentos || []).filter((p) => p.data === dia).reduce((t, p) => t + (numDot(p.valor) || 0), 0);
       s = s + pag / imp - g;
       proj.push({ dia, gasto: g, plano: prev, pag, saldo: s });
-      if (pagarAte === null && s < min) pagarAte = i === 0 ? today() : sdAddDias(dia, -1);
+      if (pagarAte === null && s < min) { furaEm = dia; pagarAte = i === 0 ? today() : sdAviso(dia); }
       if (acabaEm === null && s <= 0) acabaEm = dia;
     }
     // valor sugerido: cobre do dia em que fura o mínimo até o fim do último período do plano (ou 7 dias), mantendo o mínimo
@@ -1364,13 +1369,13 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       sugerido = falta > 0 ? { valor: falta * imp, midia: falta, ate } : null;
     }
     const st = parada ? "bad" : saldo < min ? "bad" : pagarAte && pagarAte <= sdAddDias(today(), 2) ? "warn" : lidas.length ? "ok" : "na";
-    return { d, cfg, lidas, saldo, orc, hoje, parada, proj, pagarAte, acabaEm, sugerido, st, imp, min };
+    return { d, cfg, lidas, saldo, orc, hoje, parada, proj, pagarAte, furaEm, acabaEm, sugerido, st, imp, min };
   }
   const sdSemana = (iso) => { const d = new Date(iso + "T12:00:00"); const w = (d.getDay() + 6) % 7; d.setDate(d.getDate() - w); return isoOf(d); };
 
   function viewSaldos() {
     const slugs = cfgClients().map((c) => c.slug).filter((s) => sdDoc(s) || state.cli === s);
-    const head = el("div", { class: "mhead" }, el("span", { class: "sugg" }, "Saldo e status lidos do Meta de hora em hora pela VPS. Alertas (celular + grupo Negócios Creators) para saldo abaixo do mínimo, conta parada e gasto acima do plano. ", el("span", { id: "sd-saved", class: "saved" })));
+    const head = el("div", { class: "mhead" }, el("span", { class: "sugg" }, "Saldo e status lidos do Meta de hora em hora pela VPS. Alertas (celular, grupo Negócios Creators e e-mail) para saldo abaixo do mínimo, conta parada e gasto acima do plano. Se o saldo for furar o mínimo numa sexta, fim de semana ou feriado, o aviso sai antes (último dia útil de seg a qui). ", el("span", { id: "sd-saved", class: "saved" })));
     if (!state.cli) {
       if (!slugs.length) return [head, el("div", { class: "empty" }, "Ainda sem leitura. O robô da VPS grava aqui na próxima hora cheia.")];
       return [head, el("div", { class: "scroll" }, el("table", { class: "sd-tbl" },
@@ -1398,7 +1403,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       kpi("Saldo agora", brl(r.saldo), "lido às " + at, r.parada || r.saldo < r.min ? "bad" : null),
       kpi("Orçamento ativo/dia", brl(r.orc), sdPlano(cfg, today()) !== null ? "plano de hoje: " + brl(sdPlano(cfg, today())) : "sem plano para hoje", sdPlano(cfg, today()) !== null && r.orc > sdPlano(cfg, today()) * 1.05 ? "warn" : null),
       kpi("Gasto hoje", brl(r.hoje), "com imposto: " + brl(r.hoje * r.imp)),
-      kpi("Próximo pagamento", r.pagarAte ? "até " + fmtDate(r.pagarAte) : "—", r.sugerido ? "sugerido " + brl(r.sugerido.valor) + " (cobre até " + fmtDate(r.sugerido.ate) + ")" : r.acabaEm ? "saldo acaba em " + fmtDate(r.acabaEm) : "saldo cobre os próximos 60 dias", r.pagarAte && r.pagarAte <= sdAddDias(today(), 2) ? "warn" : null));
+      kpi("Próximo pagamento", r.pagarAte ? "até " + fmtDate(r.pagarAte) : "—", (r.furaEm && r.pagarAte && r.pagarAte < r.furaEm ? "saldo fura o mínimo em " + fmtDate(r.furaEm) + " (fim de semana/feriado) · " : "") + (r.sugerido ? "sugerido " + brl(r.sugerido.valor) + " (cobre até " + fmtDate(r.sugerido.ate) + ")" : r.acabaEm ? "saldo acaba em " + fmtDate(r.acabaEm) : "saldo cobre os próximos 60 dias"), r.pagarAte && r.pagarAte <= sdAddDias(today(), 2) ? "warn" : null));
     const contas = el("div", { class: "ltags" }, r.d.contas.map((c) => el("a", { class: "chip " + (!c.lida ? "" : c.status !== 1 || (c.prepago && c.saldo <= 1 && c.orcDia > 0) ? "s-bad" : "s-ok"), href: "https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=" + c.id, target: "_blank", rel: "noopener" },
       c.nome + " · " + (!c.lida ? "sem leitura" : (c.statusTxt || "") + (c.prepago ? " · " + brl(c.saldo) : "") + (c.ultimoGasto ? " · último gasto " + fmtDate(c.ultimoGasto) : "")) + " ↗")));
     // investimento: diário / semanal / mensal
