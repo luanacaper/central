@@ -413,6 +413,18 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
   .topbar { background: rgba(255,255,255,.94); }
   .ag-col.hoje { box-shadow: none; }
 }
+/* Pessoal */
+.ag-it.f-pessoal { border-left-color: #7F9A6B; }
+.ag-day .mi.f-pessoal { border-left-color: #7F9A6B; }
+@media (max-width: 860px) { .ag-day .mi.f-pessoal { background: #7F9A6B; } }
+.pe-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.pe-row b { font-weight: 700; } .pe-row small { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+.pe-mk { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+.pe-mk:last-child { border-bottom: 0; } .pe-mk.ok span { text-decoration: line-through; color: var(--muted); }
+.pe-mk input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--mint); }
+.pe-mk .q { font-family: var(--font-mono); color: var(--muted); font-size: 13px; }
+.pe-box { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.pe-dias { display: flex; gap: 4px; flex-wrap: wrap; } .pe-dias label { display: flex; gap: 3px; align-items: center; font-size: 13px; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: var(--surface-2); }
 /* Calendário geral (agenda) */
 .ag-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
 .ag-nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -549,6 +561,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     <div class="goal rgoal" id="goal"></div>
     <h2>Clientes</h2>
     <div class="clients" id="side"></div>
+    <h2 style="margin-top:14px">Pessoal</h2>
+    <div class="clients" id="pess"></div>
     <h2 style="margin-top:14px">Ferramentas</h2>
     <div class="clients" id="tools"></div>
     <div class="rail-foot" id="round"></div>
@@ -583,6 +597,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     campanhas: '<rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="6" y="11" width="15" height="4" rx="1.5"/><rect x="9" y="17" width="12" height="4" rx="1.5"/><path d="M4.5 9v8.5H9M4.5 13H6"/>',
     saldos: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.6" fill="currentColor"/>',
     prompts: '<path d="M5 4h14v12H9l-4 4z"/><path d="M9 9h6M9 12h4"/>',
+    pessoal: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
     agenda: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z" fill="currentColor"/>',
     todos: '<path d="M4 6h16M4 12h16M4 18h10"/>'
   };
@@ -592,7 +607,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { agenda: [], agView: (() => { try { return localStorage.getItem("agView") || "semana"; } catch (e) { return "semana"; } })(), agData: "", agEdit: "", agCli: "", agPost: false, cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), proximos: {}, estrutura: {}, saldos: {}, saldoscfg: {}, sdView: "diario", campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
+  const state = { mercado: [], peCfg: null, peView: (() => { try { return localStorage.getItem("peView") || "hoje"; } catch (e) { return "hoje"; } })(), pePessoa: "", agenda: [], agView: (() => { try { return localStorage.getItem("agView") || "semana"; } catch (e) { return "semana"; } })(), agData: "", agEdit: "", agCli: "", agPost: false, cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), proximos: {}, estrutura: {}, saldos: {}, saldoscfg: {}, sdView: "diario", campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -656,7 +671,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   };
 
   try { state.aba = localStorage.getItem("aba2") || "estrategia"; state.cli = localStorage.getItem("cli2") || ""; } catch (e) {}
-  const TOOLS = ["agenda", "prompts"];
+  const TOOLS = ["agenda", "prompts", "pessoal"];
   { const h = (location.hash || "").slice(1); if (TOOLS.includes(h) || ABAS.some(([k]) => k === h)) state.aba = h; }
   if (!TOOLS.includes(state.aba) && !ABAS.some(([k]) => k === state.aba)) state.aba = "estrategia";
   function go(patch) {
@@ -693,7 +708,11 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       el("span", { class: "av", style: "background:var(--rail-2)" }, icon(k)), el("span", {}, nome, el("small", {}, sub)), badge ? el("span", { class: "badge", title: badge + " atividade(s) hoje" }, badge) : el("span"));
     const tools = () => [tool("agenda", "Calendário geral", hojeN ? hojeN + " hoje" : "agenda da semana", hojeN), tool("prompts", "Prompts", state.prompts.length + " salvos")];
     $("#tools").replaceChildren(...tools());
-    $("#mside").replaceChildren(...tools(), ...list());
+    const peHojeN = agItens(today(), today(), true).filter((x) => x.pessoal && !x.feito).length;
+    const mercN = (state.mercado || []).filter((m) => !m.comprado).length;
+    const pess = () => tool("pessoal", "Pessoal", [peHojeN ? peHojeN + " hoje" : "rotina, saúde, casa", mercN ? mercN + " no mercado" : ""].filter(Boolean).join(" · "), peHojeN);
+    $("#pess").replaceChildren(pess());
+    $("#mside").replaceChildren(tools()[0], pess(), ...tools().slice(1), ...list());
   }
 
   /* ---------- Meta da Negócios Creators ---------- */
@@ -1885,27 +1904,46 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const addD = (iso, n) => { const d = dOf(iso); d.setDate(d.getDate() + n); return isoOf(d); };
   const domingoDe = (iso) => addD(iso, -dOf(iso).getDay());
   const agRef = () => state.agData || today();
-  function agItens(de, ate) {
+  const REPETE_L = { diario: "todo dia", semanal: "toda semana", mensal: "todo mês" };
+  function agOcorre(a, d) {  // atividade que se repete
+    if (a.repete === "diario") return true;
+    if (a.repete === "semanal") { const ds = Array.isArray(a.dias) && a.dias.length ? a.dias : [dOf(a.data).getDay()]; return ds.includes(dOf(d).getDay()); }
+    if (a.repete === "mensal") return +d.slice(8) === +a.data.slice(8);
+    return false;
+  }
+  const regraTxt = (a) => !a.repete ? "" : a.repete === "semanal" ? (Array.isArray(a.dias) && a.dias.length ? a.dias.slice().sort().map((k) => DSEM[k]).join(", ") : "toda " + DSEM_L[dOf(a.data).getDay()]) : a.repete === "mensal" ? "todo dia " + (+a.data.slice(8)) : "todo dia";
+  function agItens(de, ate, todos) {
     const dentro = (d) => d && d >= de && d <= ate;
     const out = [];
     state.agenda.forEach((a) => {
       if (!a.data) return;
+      const base = { fonte: "agenda", id: a.id, titulo: a.titulo || "Sem título", hora: faixaHora(a), cliente: a.pessoal ? "" : (a.cliente || ""), pessoal: !!a.pessoal, tipo: a.tipo || "", pessoa: a.pessoa || "", repete: a.repete || "", principal: !!a.principal, notas: a.notas || "", raw: a };
+      if (a.repete) {
+        const fimR = a.dataFim && a.dataFim < ate ? a.dataFim : ate;
+        for (let d = a.data < de ? de : a.data, k = 0; d <= fimR && k < 400; k++, d = addD(d, 1))
+          if (agOcorre(a, d)) out.push(Object.assign({}, base, { data: d, feito: !!(a.feitos || {})[d] }));
+        return;
+      }
       const fimP = a.dataFim && a.dataFim > a.data ? a.dataFim : a.data;
       if (fimP < de || a.data > ate) return;
       let d = a.data < de ? de : a.data; const ult = fimP > ate ? ate : fimP;
       for (let k = 0; d <= ult && k < 400; k++, d = addD(d, 1))
-        out.push({ fonte: "agenda", id: a.id, titulo: a.titulo || "Sem título", data: d, ini: a.data, fim: fimP, hora: faixaHora(a), cliente: a.cliente || "", principal: !!a.principal, feito: !!a.feito, notas: a.notas || "", raw: a });
+        out.push(Object.assign({}, base, { data: d, ini: a.data, fim: fimP, feito: !!a.feito }));
     });
     Object.keys(state.proximos || {}).forEach((slug) => proxOf(slug).forEach((p, i) => { if (dentro(p.prazo)) out.push({ fonte: "proximo", id: slug + ":" + i, idx: i, titulo: p.texto || "Próximo passo", data: p.prazo, hora: "", cliente: slug, principal: true, feito: !!p.feito }); }));
     if (state.agPost) (state.calendarios || []).forEach((c) => (c.itens || []).forEach((it) => { if (dentro(it.data)) out.push({ fonte: "post", id: c.id + ":" + it.id, titulo: it.pauta || it.formato || "Post", data: it.data, hora: it.hora || "", cliente: c.cliente || "", principal: false, feito: /postad|publicad/i.test(it.status || "") }); }));
-    return out.filter((x) => !state.agCli || x.cliente === state.agCli)
+    return out.filter((x) => todos || (state.agCli === "__pessoal" ? x.pessoal : state.agCli ? x.cliente === state.agCli && !x.pessoal : !(state.agSemPessoal && x.pessoal)))
       .sort((a, b) => a.data.localeCompare(b.data) || (a.feito ? 1 : 0) - (b.feito ? 1 : 0) || (a.hora || "99").localeCompare(b.hora || "99") || a.titulo.localeCompare(b.titulo, "pt-BR"));
   }
   const faixaHora = (a) => a.hora ? a.hora + (a.horaFim ? "–" + a.horaFim : "") : "";
-  const agHoje = () => { const t = today(); return state.agenda.filter((a) => a.data && !a.feito && a.data <= t && (a.dataFim && a.dataFim > a.data ? a.dataFim : a.data) >= t).concat(Object.keys(state.proximos || {}).flatMap((s) => proxOf(s).filter((p) => p.prazo === t && !p.feito))); };
+  const agHoje = () => agItens(today(), today(), true).filter((x) => !x.feito && x.fonte !== "post");
   async function agToggle(x, v) {
     try {
-      if (x.fonte === "agenda") await db.collection("agenda").doc(x.id).update({ feito: v, feitoEm: v ? new Date().toISOString() : "" });
+      if (x.fonte === "agenda" && x.repete) {  // repetida: marca só a ocorrência daquele dia
+        const f = Object.assign({}, x.raw.feitos || {}); if (v) f[x.data] = true; else delete f[x.data];
+        const corte = addD(today(), -120); Object.keys(f).forEach((k) => { if (k < corte) delete f[k]; });
+        await db.collection("agenda").doc(x.id).update({ feitos: f });
+      } else if (x.fonte === "agenda") await db.collection("agenda").doc(x.id).update({ feito: v, feitoEm: v ? new Date().toISOString() : "" });
       else if (x.fonte === "proximo") { const slug = x.cliente; const its = proxOf(slug).map((p) => Object.assign({}, p)); its[x.idx].feito = v; its[x.idx].feitoEm = v ? today() : ""; await saveProx(slug, its); }
     } catch (e) { fail(e); }
   }
@@ -1918,13 +1956,15 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     if (m) { hora = pad(+m[1]) + ":" + (m[2] || "00"); if (m[3]) horaFim = pad(+m[3]) + ":" + (m[4] || "00"); titulo = m[5]; }
     else if (tn) { const T = { manha: ["08:00", "12:00"], tarde: ["13:00", "18:00"], noite: ["19:00", "22:00"] }[tn[1].toLowerCase().replace("ã", "a")]; hora = T[0]; horaFim = T[1]; titulo = tn[2]; }
     const agora = new Date().toISOString();
-    try { await db.collection("agenda").add({ titulo, data, dataFim: "", hora, horaFim, cliente: state.agCli || "", principal: !!principal, feito: false, notas: "", criadoEm: agora, editadoEm: agora }); } catch (e) { fail(e); }
+    const pes = state.aba === "pessoal" || state.agCli === "__pessoal";
+    try { await db.collection("agenda").add(Object.assign({ titulo, data, dataFim: "", hora, horaFim, cliente: pes ? "" : (state.agCli || ""), principal: !!principal, feito: false, notas: "", criadoEm: agora, editadoEm: agora },
+      pes ? { pessoal: true, tipo: (state.aba === "pessoal" && { casa: "casa", rotina: "rotina" }[state.peView]) || "pessoal", pessoa: state.pePessoa || "" } : {})); } catch (e) { fail(e); }
   }
   function agItem(x, opts) {
     const hoje = today();
-    const cls = "ag-it f-" + x.fonte + (x.feito ? " feito" : "") + (!x.feito && (x.fim || x.data) < hoje && x.fonte !== "post" ? " atrasada" : "");
+    const cls = "ag-it f-" + x.fonte + (x.pessoal ? " f-pessoal" : "") + (x.feito ? " feito" : "") + (!x.feito && !x.repete && (x.fim || x.data) < hoje && x.fonte !== "post" ? " atrasada" : "");
     const abrir = () => { if (x.fonte === "agenda") { state.agEdit = x.id; render(); } else if (x.fonte === "proximo") go({ aba: "estrategia", cli: x.cliente }); else go({ aba: "calendario", cli: x.cliente }); };
-    const sub = [x.cliente ? cliName(x.cliente) : "", x.fonte === "proximo" ? "próximo passo" : x.fonte === "post" ? "postagem" : "", opts && opts.data ? DSEM[dOf(x.data).getDay()] + " " + fmtDate(x.data) : "", x.fim && x.fim !== x.ini ? "período " + fmtDate(x.ini) + " a " + fmtDate(x.fim) : "", x.principal && x.fonte === "agenda" ? "★ principal" : ""].filter(Boolean).join(" · ");
+    const sub = [x.pessoal ? "♥ " + ((PE_TIPOS.find(([k]) => k === x.tipo) || [0, "pessoal"])[1]) + (x.pessoa ? " · " + x.pessoa : "") : "", x.repete ? "🔁 " + regraTxt(x.raw) : "", x.cliente ? cliName(x.cliente) : "", x.fonte === "proximo" ? "próximo passo" : x.fonte === "post" ? "postagem" : "", opts && opts.data ? DSEM[dOf(x.data).getDay()] + " " + fmtDate(x.data) : "", x.fim && x.fim !== x.ini ? "período " + fmtDate(x.ini) + " a " + fmtDate(x.fim) : "", x.principal && x.fonte === "agenda" ? "★ principal" : ""].filter(Boolean).join(" · ");
     return el("div", { class: cls },
       x.fonte === "post" ? el("span", { style: "width:15px" }) : el("input", { type: "checkbox", checked: x.feito, "aria-label": "Feito: " + x.titulo, onchange: (e) => agToggle(x, e.target.checked) }),
       el("div", { style: "min-width:0" }, el("button", { class: "ag-t", type: "button", onclick: abrir }, x.hora ? el("span", { class: "ag-h" }, x.hora) : null, x.titulo),
@@ -1937,6 +1977,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   }
   function agForm(a) {
     const novo = !a || !a.id; a = a || {};
+    const ehPes = a.pessoal || (novo && (state.aba === "pessoal" || state.agCli === "__pessoal"));
     const fid = "ag-f-";
     const t = el("input", { id: fid + "t", value: a.titulo || "", placeholder: "O que precisa ser feito" });
     const d = el("input", { id: fid + "d", type: "date", value: a.data || agRef() });
@@ -1944,14 +1985,28 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     const h = el("input", { id: fid + "h", type: "time", value: a.hora || "" });
     const hf = el("input", { id: fid + "hf", type: "time", value: a.horaFim || "" });
     const turno = (n, i, f) => el("button", { class: "chip", type: "button", onclick: () => { h.value = i; hf.value = f; } }, n);
-    const c = el("select", { id: fid + "c" }, el("option", { value: "" }, "Negócios Creators (geral)"), cfgClients().map((x) => el("option", { value: x.slug }, x.nome))); c.value = a.cliente || state.agCli || "";
-    const p = el("input", { id: fid + "p", type: "checkbox", checked: novo ? state.agView === "semana" : !!a.principal });
+    const c = el("select", { id: fid + "c" }, el("option", { value: "" }, "Negócios Creators (geral)"), el("option", { value: "__pessoal" }, "♥ Pessoal"), cfgClients().map((x) => el("option", { value: x.slug }, x.nome)));
+    c.value = ehPes ? "__pessoal" : (a.cliente || (state.agCli !== "__pessoal" && state.agCli) || "");
+    const p = el("input", { id: fid + "p", type: "checkbox", checked: novo ? state.aba === "agenda" && state.agView === "semana" && !ehPes : !!a.principal });
+    const tp = el("select", { id: fid + "tp" }, PE_TIPOS.map(([k, n]) => el("option", { value: k }, n))); tp.value = a.tipo || "pessoal";
+    const ps = el("select", { id: fid + "ps" }, el("option", { value: "" }, "—"), pePessoas().map((n) => el("option", { value: n }, n))); ps.value = a.pessoa || (novo ? state.pePessoa : "") || "";
+    const rp = el("select", { id: fid + "rp" }, [["", "Não repete"], ["diario", "Todo dia"], ["semanal", "Toda semana"], ["mensal", "Todo mês"]].map(([k, n]) => el("option", { value: k }, n))); rp.value = a.repete || "";
+    const diasSel = new Set(Array.isArray(a.dias) ? a.dias : []);
+    const dias = el("div", { class: "pe-dias" }, DSEM.map((n, k) => el("label", {}, el("input", { type: "checkbox", checked: diasSel.has(k), onchange: (e) => { if (e.target.checked) diasSel.add(k); else diasSel.delete(k); } }), n)));
+    const boxPes = el("div", { class: "fields" },
+      el("div", { class: "field" }, el("label", { for: fid + "tp" }, "Tipo"), tp),
+      el("div", { class: "field" }, el("label", { for: fid + "ps" }, "Pessoa"), ps));
+    const boxDias = el("div", { class: "field" }, el("label", {}, "Dias da semana"), dias);
+    const mostra = () => { boxPes.hidden = c.value !== "__pessoal"; boxDias.hidden = rp.value !== "semanal"; };
+    c.addEventListener("change", mostra); rp.addEventListener("change", mostra); mostra();
     const n = el("textarea", { id: fid + "n", style: "min-height:70px" }); n.value = a.notas || "";
     const salvar = async () => {
       if (!d.value) { d.focus(); return; }
       const agora = new Date().toISOString();
       const fimD = df.value && df.value > d.value ? df.value : "";
-      const body = { titulo: t.value.trim() || "Sem título", data: d.value, dataFim: fimD, hora: h.value || "", horaFim: h.value && hf.value && hf.value > h.value ? hf.value : "", cliente: c.value, principal: p.checked, notas: n.value, editadoEm: agora };
+      const pes = c.value === "__pessoal";
+      const body = { titulo: t.value.trim() || "Sem título", data: d.value, dataFim: fimD, hora: h.value || "", horaFim: h.value && hf.value && hf.value > h.value ? hf.value : "", cliente: pes ? "" : c.value, principal: p.checked, notas: n.value, editadoEm: agora,
+        pessoal: pes, tipo: pes ? tp.value : "", pessoa: pes ? ps.value : "", repete: rp.value, dias: rp.value === "semanal" ? Array.from(diasSel).sort() : [] };
       try {
         if (novo) await db.collection("agenda").add(Object.assign({ feito: false, criadoEm: agora }, body));
         else await db.collection("agenda").doc(a.id).update(body);
@@ -1964,10 +2019,12 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       el("div", { class: "fields" },
         el("div", { class: "field", style: "grid-column: 1 / -1" }, el("label", { for: fid + "t" }, "Atividade"), t),
         el("div", { class: "field" }, el("label", { for: fid + "d" }, "Dia (ou início)"), d),
-        el("div", { class: "field" }, el("label", { for: fid + "df" }, "Até o dia (período, opcional)"), df),
+        el("div", { class: "field" }, el("label", { for: fid + "df" }, "Até o dia (período ou fim da repetição)"), df),
         el("div", { class: "field" }, el("label", { for: fid + "h" }, "Hora início"), h),
         el("div", { class: "field" }, el("label", { for: fid + "hf" }, "Hora fim"), hf),
-        el("div", { class: "field" }, el("label", { for: fid + "c" }, "Cliente / frente"), c)),
+        el("div", { class: "field" }, el("label", { for: fid + "c" }, "Cliente / frente"), c),
+        el("div", { class: "field" }, el("label", { for: fid + "rp" }, "Repetir"), rp)),
+      boxPes, boxDias,
       el("div", { class: "ag-turnos" }, el("span", { class: "sugg", style: "align-self:center" }, "Período do dia:"),
         turno("Manhã", "08:00", "12:00"), turno("Tarde", "13:00", "18:00"), turno("Noite", "19:00", "22:00"), turno("Dia todo", "", "")),
       el("label", { style: "display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px" }, p, "★ Demanda principal da semana"),
@@ -2007,7 +2064,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       const d = addD(d0, k); const doDia = its.filter((x) => x.data === d);
       cells.push(el("button", { class: "ag-day" + (d.slice(0, 7) !== ref.slice(0, 7) ? " fora" : "") + (d === hoje ? " hoje" : ""), type: "button", "aria-label": DSEM_L[dOf(d).getDay()] + " " + fmtDate(d) + ", " + doDia.length + " atividade(s)", onclick: () => { state.agData = d; state.agView = "dia"; try { localStorage.setItem("agView", "dia"); } catch (e) {} render(); } },
         el("span", { class: "n" }, String(+d.slice(8))),
-        doDia.slice(0, 3).map((x) => el("span", { class: "mi f-" + x.fonte + (x.feito ? " feito" : "") }, (x.hora ? x.hora + " " : "") + x.titulo)),
+        doDia.slice(0, 3).map((x) => el("span", { class: "mi f-" + x.fonte + (x.pessoal ? " f-pessoal" : "") + (x.feito ? " feito" : "") }, (x.hora ? x.hora + " " : "") + x.titulo)),
         doDia.length > 3 ? el("span", { class: "mais" }, "+" + (doDia.length - 3)) : null));
     }
     return el("div", { class: "ag-month" }, DSEM.map((w) => el("div", { class: "wd" }, w)), cells);
@@ -2076,9 +2133,9 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   }
   function viewAgenda() {
     const setV = (v) => { state.agView = v; try { localStorage.setItem("agView", v); } catch (e) {} render(); };
-    const editando = state.agEdit === "novo" ? agForm(null) : state.agEdit ? agForm(state.agenda.find((a) => a.id === state.agEdit) || null) : null;
+    const editando = state.agEdit === "novo" ? agForm(state.agPreset && state.agPreset.pessoal && state.agCli === "__pessoal" ? state.agPreset : null) : state.agEdit ? agForm(state.agenda.find((a) => a.id === state.agEdit) || null) : null;
     const cli = el("select", { "aria-label": "Filtrar por cliente", style: "border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:7px 10px;font-size:14px", onchange: (e) => { state.agCli = e.target.value; render(); } },
-      el("option", { value: "" }, "Todos os clientes"), cfgClients().map((x) => el("option", { value: x.slug }, x.nome))); cli.value = state.agCli || "";
+      el("option", { value: "" }, "Tudo (trabalho + pessoal)"), el("option", { value: "__pessoal" }, "♥ Só pessoal"), cfgClients().map((x) => el("option", { value: x.slug }, x.nome))); cli.value = state.agCli || "";
     return [
       agPushBox(),
       agSemanaPrincipal(),
@@ -2096,8 +2153,118 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         el("div", { class: "ag-legend" },
           el("span", {}, el("i", { style: "background:var(--mint)" }), "atividade"),
           el("span", {}, el("i", { style: "background:#C99A2E" }), "próximo passo (Estratégia)"),
+          el("span", {}, el("i", { style: "background:#7F9A6B" }), "pessoal"),
           el("label", { style: "display:flex;gap:6px;align-items:center;cursor:pointer" }, el("input", { type: "checkbox", checked: !!state.agPost, onchange: (e) => { state.agPost = e.target.checked; render(); } }), el("i", { style: "background:#9CAF88" }), "mostrar postagens dos calendários")),
         state.agView === "mes" ? agMes() : state.agView === "dia" ? agDia() : agSemana())];
+  }
+
+  /* ---------- Pessoal (rotina, saúde, casa, mercado) — ligado ao Calendário geral ---------- */
+  const PE_TIPOS = [["pessoal", "Pessoal"], ["rotina", "Rotina diária"], ["casa", "Casa"], ["medico", "Médico / consulta"], ["vacina", "Vacina"]];
+  const pePessoas = () => (state.peCfg && Array.isArray(state.peCfg.pessoas) && state.peCfg.pessoas.length) ? state.peCfg.pessoas : ["Luana", "Calvin", "Cauê", "Heuller"];
+  const peNovo = (preset) => { state.agEdit = "novo"; state.agPreset = Object.assign({ pessoal: true, tipo: "pessoal", pessoa: state.pePessoa || "" }, preset); render(); };
+  function peForm() {
+    if (!state.agEdit) return null;
+    if (state.agEdit === "novo") return agForm(Object.assign({}, state.agPreset || { pessoal: true }));
+    return agForm(state.agenda.find((a) => a.id === state.agEdit) || null);
+  }
+  function peChipsPessoa() {
+    return el("div", { style: "display:flex;flex-wrap:wrap;gap:6px" },
+      el("button", { class: "chip" + (state.pePessoa ? "" : " s-ok"), type: "button", onclick: () => { state.pePessoa = ""; render(); } }, "Todos"),
+      pePessoas().map((n) => el("button", { class: "chip" + (state.pePessoa === n ? " s-ok" : ""), type: "button", onclick: () => { state.pePessoa = state.pePessoa === n ? "" : n; render(); } }, n)));
+  }
+  const peDaPessoa = (x) => !state.pePessoa || x.pessoa === state.pePessoa;
+  function peRegra(a) {  // linha de uma rotina (atividade que se repete)
+    return el("div", { class: "pe-row" },
+      el("div", {}, el("b", {}, a.titulo || "Sem título"), el("small", {}, ["🔁 " + regraTxt(a), faixaHora(a), a.pessoa].filter(Boolean).join(" · "))),
+      el("button", { class: "btn", type: "button", "aria-label": "Editar " + (a.titulo || ""), onclick: () => { state.agEdit = a.id; render(); } }, "✎"),
+      el("button", { class: "btn", type: "button", title: "Excluir", onclick: (e) => agExcluir(e.currentTarget, { id: a.id }) }, "🗑"));
+  }
+  function peHoje() {
+    const d = today();
+    const its = agItens(d, d, true).filter((x) => x.pessoal && peDaPessoa(x));
+    const prox = agItens(addD(d, 1), addD(d, 14), true).filter((x) => x.pessoal && !x.repete && !x.feito && peDaPessoa(x));
+    const atras = agItens(addD(d, -60), addD(d, -1), true).filter((x) => x.pessoal && !x.repete && !x.feito && peDaPessoa(x));
+    const merc = (state.mercado || []).filter((m) => !m.comprado).length;
+    return [
+      el("section", { class: "block" }, el("h2", {}, "Hoje · " + DSEM_L[dOf(d).getDay()] + ", " + fmtDate(d)),
+        its.length ? el("div", { class: "ag-dayview" }, its.map((x) => agItem(x, { notas: true }))) : el("div", { class: "empty" }, "Nada pessoal marcado pra hoje."),
+        agQuickInput(d, false, "+ atividade pessoal de hoje (ex.: 18h academia)")),
+      atras.length ? el("section", { class: "block" }, el("h2", {}, "Atrasadas"), el("div", { class: "ag-dayview" }, atras.map((x) => agItem(x, { data: true })))) : null,
+      el("section", { class: "block" }, el("h2", {}, "Próximos 14 dias"),
+        prox.length ? el("div", { class: "ag-dayview" }, prox.map((x) => agItem(x, { data: true }))) : el("div", { class: "sugg" }, "Nada marcado.")),
+      merc ? el("button", { class: "btn", type: "button", onclick: () => peSetView("mercado") }, "🛒 " + merc + " " + (merc === 1 ? "item" : "itens") + " na lista de mercado") : null];
+  }
+  function peRotinas(tipo, vazio, novoTxt, preset) {
+    const regras = state.agenda.filter((a) => a.pessoal && a.tipo === tipo && peDaPessoa(a)).sort((a, b) => (a.hora || "99").localeCompare(b.hora || "99") || (a.titulo || "").localeCompare(b.titulo || ""));
+    const repetem = regras.filter((a) => a.repete), unicas = regras.filter((a) => !a.repete);
+    const d = today(); const hojeIts = agItens(d, d, true).filter((x) => x.pessoal && x.tipo === tipo && peDaPessoa(x));
+    return [
+      el("div", { class: "mhead" }, el("span", { class: "sugg" }, vazio), el("button", { class: "btn primary", type: "button", onclick: () => peNovo(Object.assign({ tipo, data: d }, preset)) }, novoTxt)),
+      hojeIts.length ? el("section", { class: "block" }, el("h2", {}, "Hoje"), el("div", { class: "ag-dayview" }, hojeIts.map((x) => agItem(x)))) : null,
+      el("section", { class: "block" }, el("h2", {}, "Fixas (se repetem)"), repetem.length ? repetem.map(peRegra) : el("div", { class: "empty" }, "Nenhuma ainda. Use “" + novoTxt + "” e escolha em Repetir.")),
+      unicas.length ? el("section", { class: "block" }, el("h2", {}, "Com data"), el("div", { class: "ag-dayview" }, agItens(addD(d, -30), addD(d, 365), true).filter((x) => x.pessoal && x.tipo === tipo && !x.repete && peDaPessoa(x)).map((x) => agItem(x, { data: true })))) : null];
+  }
+  function peSaude() {
+    const d = today();
+    const todos = agItens(addD(d, -3650), addD(d, 3650), true).filter((x) => x.pessoal && (x.tipo === "medico" || x.tipo === "vacina") && peDaPessoa(x));
+    const proximos = todos.filter((x) => !x.feito && x.data >= d);
+    const atras = todos.filter((x) => !x.feito && x.data < d);
+    const vac = todos.filter((x) => x.tipo === "vacina");
+    const hist = todos.filter((x) => x.tipo === "medico" && (x.feito || x.data < d)).reverse();
+    return [
+      el("div", { class: "mhead" }, el("span", { class: "sugg" }, "Consultas e vacinas entram no Calendário geral e no aviso das 7h."),
+        el("div", { style: "display:flex;gap:6px;flex-wrap:wrap" },
+          el("button", { class: "btn primary", type: "button", onclick: () => peNovo({ tipo: "medico" }) }, "+ Consulta"),
+          el("button", { class: "btn primary", type: "button", onclick: () => peNovo({ tipo: "vacina" }) }, "+ Vacina"))),
+      atras.length ? el("section", { class: "block" }, el("h2", {}, "Passou da data (marque se já foi)"), el("div", { class: "ag-dayview" }, atras.map((x) => agItem(x, { data: true, notas: true })))) : null,
+      el("section", { class: "block" }, el("h2", {}, "Próximas"), proximos.length ? el("div", { class: "ag-dayview" }, proximos.map((x) => agItem(x, { data: true, notas: true }))) : el("div", { class: "empty" }, "Nenhuma consulta ou vacina marcada.")),
+      el("section", { class: "block" }, el("h2", {}, "Carteira de vacinas"),
+        vac.length ? el("div", { class: "ag-dayview" }, vac.map((x) => agItem(x, { data: true, notas: true }))) : el("div", { class: "sugg" }, "Cadastre as vacinas (tomadas e próximas). Marque ✓ quando aplicar; anote dose e lote em Anotações.")),
+      hist.length ? el("section", { class: "block" }, el("h2", {}, "Histórico de consultas"), el("div", { class: "ag-dayview" }, hist.map((x) => agItem(x, { data: true, notas: true })))) : null];
+  }
+  function peMercado() {
+    const lista = (state.mercado || []).slice().sort((a, b) => (a.comprado ? 1 : 0) - (b.comprado ? 1 : 0) || String(a.criadoEm || "").localeCompare(String(b.criadoEm || "")));
+    const inp = el("input", { id: "pe-merc", placeholder: "Adicionar item (ex.: 2 leite, ração do Calvin)", style: "flex:1;min-width:200px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px 12px;font-size:15px" });
+    const add = async () => {
+      const v = inp.value.trim(); if (!v) return; inp.value = "";
+      const m = v.match(/^(\d+[.,]?\d*\s*(?:kg|g|l|ml|un|cx|pct|dz)?)\s+(.+)$/i);
+      try { await db.collection("mercado").add({ item: m ? m[2] : v, qtd: m ? m[1] : "", comprado: false, criadoEm: new Date().toISOString() }); } catch (e) { fail(e); }
+    };
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); add(); } });
+    const comprados = lista.filter((x) => x.comprado);
+    return [
+      el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" }, inp, el("button", { class: "btn primary", type: "button", onclick: add }, "Adicionar")),
+      lista.length ? el("div", { class: "pe-box" }, lista.map((x) => el("div", { class: "pe-mk" + (x.comprado ? " ok" : "") },
+        el("input", { type: "checkbox", checked: !!x.comprado, "aria-label": "Comprado: " + x.item, onchange: (e) => db.collection("mercado").doc(x.id).update({ comprado: e.target.checked }).catch(fail) }),
+        el("span", {}, x.item), el("span", { class: "q" }, x.qtd || ""),
+        el("button", { class: "ag-x", type: "button", style: "border:0;background:none;cursor:pointer", "aria-label": "Tirar " + x.item, onclick: () => db.collection("mercado").doc(x.id).delete().catch(fail) }, "✕"))))
+        : el("div", { class: "empty" }, "Lista vazia."),
+      comprados.length ? el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
+        el("button", { class: "btn", type: "button", "data-label": "Limpar comprados (" + comprados.length + ")", onclick: twoStep(async () => { try { for (const x of comprados) await db.collection("mercado").doc(x.id).delete(); } catch (e) { fail(e); } }) }, "Limpar comprados (" + comprados.length + ")"),
+        el("button", { class: "btn", type: "button", onclick: () => { const t = lista.filter((x) => !x.comprado).map((x) => "• " + (x.qtd ? x.qtd + " " : "") + x.item).join("\n"); if (navigator.clipboard) navigator.clipboard.writeText("Mercado:\n" + t); } }, "Copiar lista")) : null];
+  }
+  function peFamilia() {
+    const inp = el("input", { id: "pe-fam", placeholder: "Nome", style: "border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:9px 12px;font-size:15px" });
+    const salvar = async (lista) => { try { await db.doc("config/pessoal").set(Object.assign({}, state.peCfg || {}, { pessoas: lista })); } catch (e) { fail(e); } };
+    return [
+      el("p", { class: "sugg" }, "Quem aparece no campo Pessoa (médicos, vacinas, rotina)."),
+      el("div", { class: "block" }, pePessoas().map((n, i) => el("div", { class: "pe-row" }, el("b", {}, n), el("span"),
+        el("button", { class: "btn", type: "button", "data-label": "Tirar " + n, onclick: twoStep(() => salvar(pePessoas().filter((_, k) => k !== i))) }, "Tirar")))),
+      el("div", { style: "display:flex;gap:8px" }, inp, el("button", { class: "btn primary", type: "button", onclick: () => { const v = inp.value.trim(); if (v && !pePessoas().includes(v)) salvar(pePessoas().concat([v])); } }, "+ Pessoa"))];
+  }
+  const peSetView = (v) => { state.peView = v; state.agEdit = ""; try { localStorage.setItem("peView", v); } catch (e) {} render(); };
+  function viewPessoal() {
+    const V = [["hoje", "Hoje"], ["rotina", "Rotina diária"], ["saude", "Saúde"], ["casa", "Casa"], ["mercado", "Mercado"], ["familia", "Pessoas"]];
+    const v = V.some(([k]) => k === state.peView) ? state.peView : "hoje";
+    const corpo = v === "rotina" ? peRotinas("rotina", "Atividades do seu dia a dia. As fixas aparecem todo dia no calendário com caixinha.", "+ Rotina", { repete: "diario" })
+      : v === "casa" ? peRotinas("casa", "Tarefas da casa: limpeza, contas, manutenção, compras fixas.", "+ Tarefa da casa", { repete: "semanal" })
+      : v === "saude" ? peSaude() : v === "mercado" ? peMercado() : v === "familia" ? peFamilia() : peHoje();
+    return [
+      el("div", { class: "seg" }, V.map(([k, n]) => el("button", { type: "button", "aria-pressed": String(v === k), onclick: () => peSetView(k) }, n))),
+      ["hoje", "rotina", "saude", "casa"].includes(v) ? el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between" }, peChipsPessoa(),
+        v === "hoje" ? el("button", { class: "btn primary", type: "button", onclick: () => peNovo({ data: today() }) }, "+ Atividade pessoal") : null) : null,
+      peForm(),
+      ...corpo.filter(Boolean)];
   }
 
   /* ---------- Calendário de postagem ---------- */
@@ -2485,9 +2652,9 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   function renderNow() {
     if (state.cli && state.cfg && !cfgClients().some((c) => c.slug === state.cli)) state.cli = "";
     renderNav(); renderSide(); renderGoal();
-    const aba = state.aba; const titulo = aba === "prompts" ? "Prompts" : aba === "agenda" ? "Calendário geral" : (ABAS.find(([k]) => k === aba) || [])[1];
-    const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, aba === "prompts" ? "Biblioteca da Negócios Creators" : aba === "agenda" ? "Negócios Creators · todas as frentes" : state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
-    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "campanhas" ? viewCampanhas() : aba === "saldos" ? viewSaldos() : aba === "prompts" ? viewPrompts() : aba === "agenda" ? viewAgenda() : viewArea(aba);
+    const aba = state.aba; const titulo = aba === "prompts" ? "Prompts" : aba === "agenda" ? "Calendário geral" : aba === "pessoal" ? "Pessoal" : (ABAS.find(([k]) => k === aba) || [])[1];
+    const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, aba === "prompts" ? "Biblioteca da Negócios Creators" : aba === "agenda" ? "Negócios Creators · todas as frentes" : aba === "pessoal" ? "Só seu · ligado ao Calendário geral" : state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
+    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "campanhas" ? viewCampanhas() : aba === "saldos" ? viewSaldos() : aba === "prompts" ? viewPrompts() : aba === "agenda" ? viewAgenda() : aba === "pessoal" ? viewPessoal() : viewArea(aba);
     document.body.classList.toggle("wide", !!state.wide && aba === "planilhas" && !!state.cli);
     keepFocus(() => $("#main").replaceChildren(head, ...body.filter(Boolean)));
     document.querySelectorAll("textarea, input:not([type]), input[type=text]").forEach((e) => { e.spellcheck = true; e.lang = "pt-BR"; });
@@ -2517,6 +2684,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("roteiros").onSnapshot((s) => { state.roteiros = listOf(s); render(); }, onErr);
     db.collection("pedidos").onSnapshot((s) => { state.pedidos = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ped-"))) render(); }, onErr);
     db.collection("prompts").onSnapshot((s) => { state.prompts = listOf(s); render(); }, onErr);
+    db.collection("mercado").onSnapshot((s) => { state.mercado = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("pe-"))) render(); }, onErr);
+    db.doc("config/pessoal").onSnapshot((s) => { state.peCfg = s.exists ? s.data() : null; render(); }, onErr);
     db.collection("agenda").onSnapshot((s) => { state.agenda = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ag-"))) render(); }, onErr);
     db.collection("proximos").onSnapshot((s) => { state.proximos = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("px-"))) render(); }, onErr);
     db.collection("estrutura").onSnapshot((s) => { state.estrutura = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("cf-"))) render(); }, onErr);
