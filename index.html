@@ -1964,7 +1964,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     const hoje = today();
     const cls = "ag-it f-" + x.fonte + (x.pessoal ? " f-pessoal" : "") + (x.feito ? " feito" : "") + (!x.feito && !x.repete && (x.fim || x.data) < hoje && x.fonte !== "post" ? " atrasada" : "");
     const abrir = () => { if (x.fonte === "agenda") { state.agEdit = x.id; render(); } else if (x.fonte === "proximo") go({ aba: "estrategia", cli: x.cliente }); else go({ aba: "calendario", cli: x.cliente }); };
-    const sub = [x.pessoal ? "♥ " + ((PE_TIPOS.find(([k]) => k === x.tipo) || [0, "pessoal"])[1]) + (x.pessoa ? " · " + x.pessoa : "") : "", x.repete ? "🔁 " + regraTxt(x.raw) : "", x.cliente ? cliName(x.cliente) : "", x.fonte === "proximo" ? "próximo passo" : x.fonte === "post" ? "postagem" : "", opts && opts.data ? DSEM[dOf(x.data).getDay()] + " " + fmtDate(x.data) : "", x.fim && x.fim !== x.ini ? "período " + fmtDate(x.ini) + " a " + fmtDate(x.fim) : "", x.principal && x.fonte === "agenda" ? "★ principal" : ""].filter(Boolean).join(" · ");
+    const sub = [x.pessoal ? "♥ " + ((PE_TIPOS.find(([k]) => k === x.tipo) || [0, "pessoal"])[1]) + (x.pessoa ? " · " + x.pessoa : "") : "", x.repete ? "🔁 " + regraTxt(x.raw) : "", x.raw && x.raw.externo ? "📍 " + (x.raw.local || "externo") : "", x.cliente ? cliName(x.cliente) : "", x.fonte === "proximo" ? "próximo passo" : x.fonte === "post" ? "postagem" : "", opts && opts.data ? DSEM[dOf(x.data).getDay()] + " " + fmtDate(x.data) : "", x.fim && x.fim !== x.ini ? "período " + fmtDate(x.ini) + " a " + fmtDate(x.fim) : "", x.principal && x.fonte === "agenda" ? "★ principal" : ""].filter(Boolean).join(" · ");
     return el("div", { class: cls },
       x.fonte === "post" ? el("span", { style: "width:15px" }) : el("input", { type: "checkbox", checked: x.feito, "aria-label": "Feito: " + x.titulo, onchange: (e) => agToggle(x, e.target.checked) }),
       el("div", { style: "min-width:0" }, el("button", { class: "ag-t", type: "button", onclick: abrir }, x.hora ? el("span", { class: "ag-h" }, x.hora) : null, x.titulo),
@@ -2000,12 +2000,18 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     const mostra = () => { boxPes.hidden = c.value !== "__pessoal"; boxDias.hidden = rp.value !== "semanal"; };
     c.addEventListener("change", mostra); rp.addEventListener("change", mostra); mostra();
     const n = el("textarea", { id: fid + "n", style: "min-height:70px" }); n.value = a.notas || "";
+    const ex = el("input", { id: fid + "ex", type: "checkbox", checked: a.externo !== undefined ? !!a.externo : a.tipo === "medico" || a.tipo === "vacina" });
+    const lc = el("input", { id: fid + "lc", value: a.local || "", placeholder: "Endereço ou lugar" });
+    const av = el("select", { id: fid + "av" }, [["15", "15 min antes"], ["30", "30 min antes"], ["60", "1 hora antes"], ["120", "2 horas antes"], ["1440", "1 dia antes"]].map(([k, t]) => el("option", { value: k }, t))); av.value = String(a.avisarMin || 60);
+    const boxEx = el("div", { class: "fields" }, el("div", { class: "field" }, el("label", { for: fid + "lc" }, "Local"), lc), el("div", { class: "field" }, el("label", { for: fid + "av" }, "Avisar no celular"), av));
+    const mostraEx = () => { boxEx.hidden = !ex.checked; }; ex.addEventListener("change", mostraEx); mostraEx();
     const salvar = async () => {
       if (!d.value) { d.focus(); return; }
       const agora = new Date().toISOString();
       const fimD = df.value && df.value > d.value ? df.value : "";
       const pes = c.value === "__pessoal";
       const body = { titulo: t.value.trim() || "Sem título", data: d.value, dataFim: fimD, hora: h.value || "", horaFim: h.value && hf.value && hf.value > h.value ? hf.value : "", cliente: pes ? "" : c.value, principal: p.checked, notas: n.value, editadoEm: agora,
+        externo: ex.checked, local: ex.checked ? lc.value.trim() : "", avisarMin: ex.checked ? +av.value : 0,
         pessoal: pes, tipo: pes ? tp.value : "", pessoa: pes ? ps.value : "", repete: rp.value, dias: rp.value === "semanal" ? Array.from(diasSel).sort() : [] };
       try {
         if (novo) await db.collection("agenda").add(Object.assign({ feito: false, criadoEm: agora }, body));
@@ -2027,6 +2033,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       boxPes, boxDias,
       el("div", { class: "ag-turnos" }, el("span", { class: "sugg", style: "align-self:center" }, "Período do dia:"),
         turno("Manhã", "08:00", "12:00"), turno("Tarde", "13:00", "18:00"), turno("Noite", "19:00", "22:00"), turno("Dia todo", "", "")),
+      el("label", { style: "display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px" }, ex, "📍 Compromisso externo (aviso no celular antes do horário)"),
+      boxEx,
       el("label", { style: "display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px" }, p, "★ Demanda principal da semana"),
       el("div", { class: "field" }, el("label", { for: fid + "n" }, "Anotações"), n),
       el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center" },
