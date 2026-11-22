@@ -519,6 +519,20 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
 .sh tr.row-st-3 td.rn { color: #3D7BE0; } .sh tr.row-st-4 td.rn { color: var(--ok); }
 .armed { color: var(--bad) !important; font-size: 11px !important; font-weight: 800; }
 @media (prefers-reduced-motion: no-preference) { .cbtn, nav.areas button, .btn { transition: background-color .15s, color .15s, border-color .15s; } }
+/* Saldos */
+.sd-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.sd-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; }
+.sd-kpi small { font-size: 12px; color: var(--muted); font-weight: 700; }
+.sd-kpi b { font-size: 20px; }
+.sd-kpi.s-bad { border-color: var(--bad); background: var(--bad-soft); } .sd-kpi.s-warn { border-color: var(--warn); background: var(--warn-soft); } .sd-kpi.s-ok { border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); }
+.sd-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.sd-tbl th, .sd-tbl td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.sd-tbl td.n, .sd-tbl th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.sd-tbl tr.s-bad td { background: var(--bad-soft); } .sd-tbl tr.s-warn td { background: var(--warn-soft); } .sd-tbl tr.pg td { font-weight: 700; }
+.sd-bar { height: 8px; border-radius: 6px; background: var(--mint, #C8603A); min-width: 2px; }
+.sd-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sd-row input.cell { flex: none; width: 140px; }
+.sd-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
 </style>
 </head>
 <body>
@@ -554,8 +568,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
 
 <script>
 (function () {
-  const ABAS = [["estrategia", "Estratégia"], ["trafego", "Gestão de tráfego"], ["creators", "Gestão de creators"], ["conteudo", "Criação de conteúdo"], ["gravacao", "Gravação"], ["planilhas", "Planilhas"], ["links", "Links"], ["roteiros", "Roteiros"], ["calendario", "Calendário"], ["campanhas", "Campanhas no ar"]];
-  const CURTO = { estrategia: "Estratégia", trafego: "Tráfego", creators: "Creators", conteudo: "Conteúdo", gravacao: "Gravação", planilhas: "Planilhas", links: "Links", roteiros: "Roteiros", calendario: "Calendário", campanhas: "Campanhas" };
+  const ABAS = [["estrategia", "Estratégia"], ["trafego", "Gestão de tráfego"], ["creators", "Gestão de creators"], ["conteudo", "Criação de conteúdo"], ["gravacao", "Gravação"], ["planilhas", "Planilhas"], ["links", "Links"], ["roteiros", "Roteiros"], ["calendario", "Calendário"], ["campanhas", "Campanhas no ar"], ["saldos", "Saldos e investimento"]];
+  const CURTO = { estrategia: "Estratégia", trafego: "Tráfego", creators: "Creators", conteudo: "Conteúdo", gravacao: "Gravação", planilhas: "Planilhas", links: "Links", roteiros: "Roteiros", calendario: "Calendário", campanhas: "Campanhas", saldos: "Saldos" };
   const ICONS = {
     estrategia: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',
     trafego: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
@@ -567,6 +581,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     roteiros: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 12h6M10 16h6"/>',
     calendario: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     campanhas: '<rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="6" y="11" width="15" height="4" rx="1.5"/><rect x="9" y="17" width="12" height="4" rx="1.5"/><path d="M4.5 9v8.5H9M4.5 13H6"/>',
+    saldos: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.6" fill="currentColor"/>',
     prompts: '<path d="M5 4h14v12H9l-4 4z"/><path d="M9 9h6M9 12h4"/>',
     agenda: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z" fill="currentColor"/>',
     todos: '<path d="M4 6h16M4 12h16M4 18h10"/>'
@@ -577,7 +592,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   const ORDER = { bad: 0, warn: 1, ok: 2, na: 3 };
   const SIG = [["campanha", "Campanha"], ["lead", "Lead"], ["purchase", "Purchase"], ["pagamento", "Pagamento"]];
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const state = { agenda: [], agView: (() => { try { return localStorage.getItem("agView") || "semana"; } catch (e) { return "semana"; } })(), agData: "", agEdit: "", agCli: "", agPost: false, cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), proximos: {}, estrutura: {}, campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
+  const state = { agenda: [], agView: (() => { try { return localStorage.getItem("agView") || "semana"; } catch (e) { return "semana"; } })(), agData: "", agEdit: "", agCli: "", agPost: false, cfg: null, clientes: [], edicoes: {}, pend: [], ultima: null, showDone: false, frentes: [], progresso: {}, metas: {}, otim: [], metasNc: {}, planilhas: [], sheet: "", links: {}, linkEdit: "", roteiros: [], roteiro: "", rotSel: {}, dicio: null, pedidos: [], pedido: "", calendarios: [], cal: "", calEdit: false, calView: (() => { try { return localStorage.getItem("calView") || "lista"; } catch (e) { return "lista"; } })(), proximos: {}, estrutura: {}, saldos: {}, saldoscfg: {}, sdView: "diario", campEdit: "", campView: (() => { try { return localStorage.getItem("campView") || "estrutura"; } catch (e) { return "estrutura"; } })(), prompts: [], prmQ: "", prmTag: "", prmEdit: "", prmOpen: "", aba: "estrategia", cli: "", mes: "" };
   let db = null;
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => {
@@ -1305,6 +1320,128 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     return [head, ...slugs.map((slug) => el("section", { class: "block" },
       el("div", { class: "mhead" }, el("h2", {}, cliName(slug)), el("button", { class: "linkbtn", type: "button", onclick: () => go({ cli: slug }) }, "Editar")),
       el("div", { class: "est-list" }, campsOf(slug).map((c, i) => campCard(slug, c, i, false)))))];
+  }
+
+  /* ---------- Saldos e investimento (coleções saldos = robô da VPS, saldoscfg = da Luana) ---------- */
+  const SD_PADRAO = { minimo: 400, imposto: 13.83, avisos: true, plano: [], pagamentos: [] };
+  const sdCfg = (slug) => Object.assign({}, SD_PADRAO, state.saldoscfg[slug] || {});
+  const sdDoc = (slug) => state.saldos[slug] || null;
+  const sdAddDias = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return isoOf(d); };
+  const sdId = () => Math.random().toString(36).slice(2, 9);
+  async function sdSave(slug, patch, node) {
+    const cur = sdCfg(slug);
+    try { await db.collection("saldoscfg").doc(slug).set(Object.assign({}, cur, patch, { editadoEm: new Date().toISOString() })); flash(node || $("#sd-saved")); } catch (e) { fail(e); }
+  }
+  const sdPlano = (cfg, iso) => { const p = (cfg.plano || []).find((x) => x.de && iso >= x.de && (!x.ate || iso <= x.ate)); return p ? (numDot(p.porDia) || 0) : null; };
+  function sdResumo(slug) {
+    const d = sdDoc(slug), cfg = sdCfg(slug);
+    if (!d) return null;
+    const lidas = (d.contas || []).filter((c) => c.lida);
+    const saldo = lidas.filter((c) => c.prepago && typeof c.saldo === "number").reduce((s, c) => s + c.saldo, 0);
+    const orc = lidas.reduce((s, c) => s + (c.orcDia || 0), 0), hoje = lidas.reduce((s, c) => s + (c.gastoHoje || 0), 0);
+    const parada = lidas.some((c) => c.status !== 1 || (c.prepago && c.saldo <= 1 && c.orcDia > 0));
+    const imp = 1 + (numDot(cfg.imposto) || 0) / 100, min = numDot(cfg.minimo) || 0;
+    // projeção: 60 dias, gasto = plano do dia (ou orçamento ativo), pagamentos entram descontando o imposto
+    const proj = []; let s = saldo, pagarAte = null, acabaEm = null;
+    for (let i = 0; i < 60; i++) {
+      const dia = sdAddDias(today(), i);
+      const prev = sdPlano(cfg, dia); const gasto = prev !== null ? prev : orc;
+      const g = i === 0 ? Math.max(0, gasto - hoje) : gasto;
+      const pag = (cfg.pagamentos || []).filter((p) => p.data === dia).reduce((t, p) => t + (numDot(p.valor) || 0), 0);
+      s = s + pag / imp - g;
+      proj.push({ dia, gasto: g, plano: prev, pag, saldo: s });
+      if (pagarAte === null && s < min) pagarAte = i === 0 ? today() : sdAddDias(dia, -1);
+      if (acabaEm === null && s <= 0) acabaEm = dia;
+    }
+    // valor sugerido: cobre do dia em que fura o mínimo até o fim do último período do plano (ou 7 dias), mantendo o mínimo
+    let sugerido = null;
+    if (pagarAte) {
+      const fimPlano = (cfg.plano || []).map((p) => p.ate || "").filter(Boolean).sort().pop();
+      const ate = fimPlano && fimPlano > pagarAte ? fimPlano : sdAddDias(pagarAte, 7);
+      const i0 = proj.findIndex((x) => x.dia === pagarAte);
+      const base = i0 >= 0 ? proj[i0].saldo : saldo;
+      const falta = proj.filter((x) => x.dia > pagarAte && x.dia <= ate).reduce((t, x) => t + x.gasto, 0) + min - Math.max(0, base);
+      sugerido = falta > 0 ? { valor: falta * imp, midia: falta, ate } : null;
+    }
+    const st = parada ? "bad" : saldo < min ? "bad" : pagarAte && pagarAte <= sdAddDias(today(), 2) ? "warn" : lidas.length ? "ok" : "na";
+    return { d, cfg, lidas, saldo, orc, hoje, parada, proj, pagarAte, acabaEm, sugerido, st, imp, min };
+  }
+  const sdSemana = (iso) => { const d = new Date(iso + "T12:00:00"); const w = (d.getDay() + 6) % 7; d.setDate(d.getDate() - w); return isoOf(d); };
+
+  function viewSaldos() {
+    const slugs = cfgClients().map((c) => c.slug).filter((s) => sdDoc(s) || state.cli === s);
+    const head = el("div", { class: "mhead" }, el("span", { class: "sugg" }, "Saldo e status lidos do Meta de hora em hora pela VPS. Alertas (celular + grupo Negócios Creators) para saldo abaixo do mínimo, conta parada e gasto acima do plano. ", el("span", { id: "sd-saved", class: "saved" })));
+    if (!state.cli) {
+      if (!slugs.length) return [head, el("div", { class: "empty" }, "Ainda sem leitura. O robô da VPS grava aqui na próxima hora cheia.")];
+      return [head, el("div", { class: "scroll" }, el("table", { class: "sd-tbl" },
+        el("tr", {}, el("th", {}, "Cliente"), el("th", { class: "n" }, "Saldo agora"), el("th", { class: "n" }, "Orçamento/dia"), el("th", { class: "n" }, "Gasto hoje"), el("th", { class: "n" }, "Mínimo"), el("th", {}, "Pagar até"), el("th", {}, "Status"), el("th", {})),
+        slugs.map((slug) => {
+          const r = sdResumo(slug);
+          if (!r || !r.lidas.length) return el("tr", {}, el("td", {}, cliName(slug)), el("td", { colspan: 6, class: "sugg" }, "sem leitura (falta token do Meta na VPS)"), el("td", {}, el("button", { class: "linkbtn", type: "button", onclick: () => go({ cli: slug }) }, "Abrir")));
+          return el("tr", { class: r.st === "bad" ? "s-bad" : r.st === "warn" ? "s-warn" : "" },
+            el("td", {}, el("b", {}, cliName(slug))), el("td", { class: "n" }, brl(r.saldo)), el("td", { class: "n" }, brl(r.orc)), el("td", { class: "n" }, brl(r.hoje)), el("td", { class: "n" }, brl(r.min)),
+            el("td", {}, r.pagarAte ? fmtDate(r.pagarAte) : "—"),
+            el("td", {}, el("span", { class: "chip s-" + r.st }, r.parada ? "Parada" : r.st === "bad" ? "Abaixo do mínimo" : r.st === "warn" ? "Pagar em breve" : "Ok")),
+            el("td", {}, el("button", { class: "linkbtn", type: "button", onclick: () => go({ cli: slug }) }, "Abrir")));
+        })))];
+    }
+    const slug = state.cli, r = sdResumo(slug), cfg = sdCfg(slug);
+    const cfgBox = el("div", { class: "sd-card" }, el("div", { class: "label" }, "Alertas deste cliente", el("small", {}, "vale para o celular e o grupo")),
+      el("div", { class: "sd-row" },
+        el("label", { class: "sugg" }, "Saldo mínimo (R$) "), textBox("sd-min-" + slug, String(cfg.minimo ?? ""), (x) => sdSave(slug, { minimo: numDot(x) || 0 }), { input: true, attrs: { class: "cell", inputmode: "decimal" } }),
+        el("label", { class: "sugg" }, "Imposto do Meta (%) "), textBox("sd-imp-" + slug, String(cfg.imposto ?? ""), (x) => sdSave(slug, { imposto: numDot(x) || 0 }), { input: true, attrs: { class: "cell", inputmode: "decimal", style: "width:80px" } }),
+        el("label", { class: "sugg", style: "display:flex;gap:6px;align-items:center" }, el("input", { id: "sd-av-" + slug, type: "checkbox", checked: cfg.avisos !== false, onchange: (e) => sdSave(slug, { avisos: e.target.checked }) }), "Notificações ligadas")));
+    if (!r || !r.lidas.length) return [head, cfgBox, el("div", { class: "empty" }, (r ? "Não consigo ler as contas de " : "Ainda sem leitura de ") + cliName(slug) + ". Para ligar, gere um token (usuário do sistema com ads_read) no gerenciador de negócios da conta e coloque na VPS.")];
+    const at = r.d.atualizadoEm ? new Date(r.d.atualizadoEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+    const kpi = (t, v, sub, st) => el("div", { class: "sd-kpi" + (st ? " s-" + st : "") }, el("small", {}, t), el("b", {}, v), sub ? el("span", { class: "sugg" }, sub) : null);
+    const kpis = el("div", { class: "sd-kpis" },
+      kpi("Saldo agora", brl(r.saldo), "lido às " + at, r.parada || r.saldo < r.min ? "bad" : null),
+      kpi("Orçamento ativo/dia", brl(r.orc), sdPlano(cfg, today()) !== null ? "plano de hoje: " + brl(sdPlano(cfg, today())) : "sem plano para hoje", sdPlano(cfg, today()) !== null && r.orc > sdPlano(cfg, today()) * 1.05 ? "warn" : null),
+      kpi("Gasto hoje", brl(r.hoje), "com imposto: " + brl(r.hoje * r.imp)),
+      kpi("Próximo pagamento", r.pagarAte ? "até " + fmtDate(r.pagarAte) : "—", r.sugerido ? "sugerido " + brl(r.sugerido.valor) + " (cobre até " + fmtDate(r.sugerido.ate) + ")" : r.acabaEm ? "saldo acaba em " + fmtDate(r.acabaEm) : "saldo cobre os próximos 60 dias", r.pagarAte && r.pagarAte <= sdAddDias(today(), 2) ? "warn" : null));
+    const contas = el("div", { class: "ltags" }, r.d.contas.map((c) => el("a", { class: "chip " + (!c.lida ? "" : c.status !== 1 || (c.prepago && c.saldo <= 1 && c.orcDia > 0) ? "s-bad" : "s-ok"), href: "https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=" + c.id, target: "_blank", rel: "noopener" },
+      c.nome + " · " + (!c.lida ? "sem leitura" : (c.statusTxt || "") + (c.prepago ? " · " + brl(c.saldo) : "") + (c.ultimoGasto ? " · último gasto " + fmtDate(c.ultimoGasto) : "")) + " ↗")));
+    // investimento: diário / semanal / mensal
+    const diario = r.d.diario || [];
+    const grupos = state.sdView === "semanal" ? Object.entries(diario.reduce((m, x) => { const k = sdSemana(x.d); m[k] = (m[k] || 0) + x.g; return m; }, {})).sort().reverse().slice(0, 12).map(([k, g]) => [fmtDate(k) + " a " + fmtDate(sdAddDias(k, 6)), g])
+      : state.sdView === "mensal" ? Object.entries(diario.reduce((m, x) => { const k = x.d.slice(0, 7); m[k] = (m[k] || 0) + x.g; return m; }, {})).sort().reverse().map(([k, g]) => [mesLabel(k), g])
+      : diario.slice().reverse().slice(0, 21).map((x) => [fmtDate(x.d) + " " + ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][new Date(x.d + "T12:00:00").getDay()], x.g, sdPlano(cfg, x.d)]);
+    const maxG = Math.max(1, ...grupos.map((x) => x[1]));
+    const invest = el("div", { class: "sd-card" }, el("div", { class: "mhead" }, el("div", { class: "label" }, "Investimento"),
+      el("div", { class: "seg" }, [["diario", "Diário"], ["semanal", "Semanal"], ["mensal", "Mês a mês"]].map(([k, n]) => el("button", { type: "button", "aria-pressed": String(state.sdView === k), onclick: () => { state.sdView = k; render(); } }, n)))),
+      el("div", { class: "scroll" }, el("table", { class: "sd-tbl" }, el("tr", {}, el("th", {}, state.sdView === "diario" ? "Dia" : state.sdView === "semanal" ? "Semana" : "Mês"), el("th", { class: "n" }, "Mídia"), el("th", { class: "n" }, "Com imposto"), state.sdView === "diario" ? el("th", { class: "n" }, "Plano") : null, el("th", { style: "width:40%" })),
+        grupos.map(([k, g, pl]) => el("tr", { class: pl && g > pl * 1.2 ? "s-warn" : "" }, el("td", {}, k), el("td", { class: "n" }, brl(g)), el("td", { class: "n" }, brl(g * r.imp)), state.sdView === "diario" ? el("td", { class: "n" }, pl !== null && pl !== undefined ? brl(pl) : "—") : null,
+          el("td", {}, el("div", { class: "sd-bar", style: "width:" + Math.round(100 * g / maxG) + "%" })))))));
+    // planejamento
+    const plano = (cfg.plano || []).slice().sort((a, b) => (a.de || "").localeCompare(b.de || ""));
+    const editPlano = (id, patch) => sdSave(slug, { plano: (cfg.plano || []).map((p) => p.id === id ? Object.assign({}, p, patch) : p) });
+    const editPag = (id, patch) => sdSave(slug, { pagamentos: (cfg.pagamentos || []).map((p) => p.id === id ? Object.assign({}, p, patch) : p) });
+    const planoBox = el("div", { class: "sd-card" }, el("div", { class: "label" }, "Planejamento de investimento", el("small", {}, "valor de mídia por dia, sem imposto")),
+      plano.length ? null : el("div", { class: "sugg" }, "Sem plano: a projeção usa o orçamento ativo de hoje."),
+      plano.map((p) => el("div", { class: "sd-row" },
+        el("span", { class: "sugg" }, "de"), el("input", { id: "sd-pde-" + p.id, type: "date", class: "cell", value: p.de || "", onchange: (e) => editPlano(p.id, { de: e.target.value }) }),
+        el("span", { class: "sugg" }, "até"), el("input", { id: "sd-pate-" + p.id, type: "date", class: "cell", value: p.ate || "", onchange: (e) => editPlano(p.id, { ate: e.target.value }) }),
+        textBox("sd-pv-" + p.id, String(p.porDia ?? ""), (x) => editPlano(p.id, { porDia: numDot(x) || 0 }), { input: true, attrs: { class: "cell", inputmode: "decimal", placeholder: "R$/dia", style: "width:110px" } }),
+        textBox("sd-po-" + p.id, p.obs || "", (x) => editPlano(p.id, { obs: x }), { input: true, attrs: { class: "cell", placeholder: "obs.", style: "width:200px" } }),
+        el("button", { class: "x", type: "button", title: "Apagar período", onclick: () => sdSave(slug, { plano: (cfg.plano || []).filter((x) => x.id !== p.id) }) }, "×"))),
+      el("div", {}, el("button", { class: "btn", type: "button", onclick: () => sdSave(slug, { plano: (cfg.plano || []).concat([{ id: sdId(), de: today(), ate: "", porDia: r.orc, obs: "" }]) }) }, "+ Período")),
+      el("div", { class: "label" }, "Pagamentos previstos", el("small", {}, "valor pago (com imposto)")),
+      (cfg.pagamentos || []).slice().sort((a, b) => (a.data || "").localeCompare(b.data || "")).map((p) => el("div", { class: "sd-row" },
+        el("input", { id: "sd-gd-" + p.id, type: "date", class: "cell", value: p.data || "", onchange: (e) => editPag(p.id, { data: e.target.value }) }),
+        textBox("sd-gv-" + p.id, String(p.valor ?? ""), (x) => editPag(p.id, { valor: numDot(x) || 0 }), { input: true, attrs: { class: "cell", inputmode: "decimal", placeholder: "R$", style: "width:110px" } }),
+        el("span", { class: "sugg" }, "vira " + brl((numDot(p.valor) || 0) / r.imp) + " de mídia"),
+        textBox("sd-go-" + p.id, p.obs || "", (x) => editPag(p.id, { obs: x }), { input: true, attrs: { class: "cell", placeholder: "quem paga / obs.", style: "width:200px" } }),
+        el("button", { class: "x", type: "button", title: "Apagar pagamento", onclick: () => sdSave(slug, { pagamentos: (cfg.pagamentos || []).filter((x) => x.id !== p.id) }) }, "×"))),
+      el("div", {}, el("button", { class: "btn", type: "button", onclick: () => sdSave(slug, { pagamentos: (cfg.pagamentos || []).concat([{ id: sdId(), data: r.pagarAte || today(), valor: r.sugerido ? Math.round(r.sugerido.valor * 100) / 100 : 0, obs: "" }]) }) }, "+ Pagamento")));
+    const projBox = el("div", { class: "sd-card" }, el("div", { class: "label" }, "Projeção dos próximos dias", el("small", {}, "saldo previsto no fim de cada dia")),
+      el("div", { class: "scroll" }, el("table", { class: "sd-tbl" }, el("tr", {}, el("th", {}, "Dia"), el("th", { class: "n" }, "Gasto previsto"), el("th", { class: "n" }, "Pagamento"), el("th", { class: "n" }, "Saldo previsto")),
+        r.proj.slice(0, 31).map((x) => el("tr", { class: (x.pag ? "pg " : "") + (x.saldo <= 0 ? "s-bad" : x.saldo < r.min ? "s-warn" : "") },
+          el("td", {}, fmtDate(x.dia) + " " + ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][new Date(x.dia + "T12:00:00").getDay()] + (x.dia === r.pagarAte ? " · pagar até aqui" : "")),
+          el("td", { class: "n" }, brl(x.gasto) + (x.plano === null ? " *" : "")), el("td", { class: "n" }, x.pag ? brl(x.pag) : ""), el("td", { class: "n" }, brl(x.saldo)))))),
+      el("div", { class: "sugg" }, "* sem plano para o dia: usa o orçamento ativo de hoje (" + brl(r.orc) + "). Pagamentos entram descontando o imposto de " + (numDot(cfg.imposto) || 0) + "%."));
+    const alertas = (r.d.alertas || []).slice(0, 10);
+    const alBox = el("div", { class: "sd-card" }, el("div", { class: "label" }, "Alertas recentes"), alertas.length ? alertas.map((a) => el("div", { class: "sugg" }, new Date(a.quando).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) + " · " + a.txt)) : el("div", { class: "sugg" }, "Nenhum alerta."));
+    return [head, kpis, contas, cfgBox, invest, planoBox, projBox, alBox];
   }
 
   /* ---------- Links ---------- */
@@ -2345,7 +2482,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     renderNav(); renderSide(); renderGoal();
     const aba = state.aba; const titulo = aba === "prompts" ? "Prompts" : aba === "agenda" ? "Calendário geral" : (ABAS.find(([k]) => k === aba) || [])[1];
     const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, aba === "prompts" ? "Biblioteca da Negócios Creators" : aba === "agenda" ? "Negócios Creators · todas as frentes" : state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
-    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "campanhas" ? viewCampanhas() : aba === "prompts" ? viewPrompts() : aba === "agenda" ? viewAgenda() : viewArea(aba);
+    const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "campanhas" ? viewCampanhas() : aba === "saldos" ? viewSaldos() : aba === "prompts" ? viewPrompts() : aba === "agenda" ? viewAgenda() : viewArea(aba);
     document.body.classList.toggle("wide", !!state.wide && aba === "planilhas" && !!state.cli);
     keepFocus(() => $("#main").replaceChildren(head, ...body.filter(Boolean)));
     document.querySelectorAll("textarea, input:not([type]), input[type=text]").forEach((e) => { e.spellcheck = true; e.lang = "pt-BR"; });
@@ -2378,6 +2515,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     db.collection("agenda").onSnapshot((s) => { state.agenda = listOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("ag-"))) render(); }, onErr);
     db.collection("proximos").onSnapshot((s) => { state.proximos = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("px-"))) render(); }, onErr);
     db.collection("estrutura").onSnapshot((s) => { state.estrutura = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("cf-"))) render(); }, onErr);
+    db.collection("saldos").onSnapshot((s) => { state.saldos = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("sd-"))) render(); }, onErr);
+    db.collection("saldoscfg").onSnapshot((s) => { state.saldoscfg = mapOf(s); if (!(document.activeElement && String(document.activeElement.id).startsWith("sd-"))) render(); }, onErr);
     db.collection("calendarios").onSnapshot((s) => { state.calendarios = listOf(s); render(); }, onErr);
     db.doc("config/dicionario").onSnapshot((s) => { state.dicio = s.exists ? s.data() : null; }, onErr);
   })();
