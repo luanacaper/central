@@ -1377,8 +1377,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     const slugs = cfgClients().map((c) => c.slug).filter((s) => sdDoc(s) || state.cli === s);
     const head = el("div", { class: "mhead" }, el("span", { class: "sugg" }, "Saldo e status lidos do Meta de hora em hora pela VPS. Alertas (celular, grupo Negócios Creators e e-mail) para saldo abaixo do mínimo, conta parada e gasto acima do plano. Se o saldo for furar o mínimo numa sexta, fim de semana ou feriado, o aviso sai antes (último dia útil de seg a qui). ", el("span", { id: "sd-saved", class: "saved" })));
     if (!state.cli) {
-      if (!slugs.length) return [head, el("div", { class: "empty" }, "Ainda sem leitura. O robô da VPS grava aqui na próxima hora cheia.")];
-      return [head, el("div", { class: "scroll" }, el("table", { class: "sd-tbl" },
+      if (!slugs.length) return [head, agPushBox(), el("div", { class: "empty" }, "Ainda sem leitura. O robô da VPS grava aqui na próxima hora cheia.")];
+      return [head, agPushBox(), el("div", { class: "scroll" }, el("table", { class: "sd-tbl" },
         el("tr", {}, el("th", {}, "Cliente"), el("th", { class: "n" }, "Saldo agora"), el("th", { class: "n" }, "Orçamento/dia"), el("th", { class: "n" }, "Gasto hoje"), el("th", { class: "n" }, "Mínimo"), el("th", {}, "Pagar até"), el("th", {}, "Status"), el("th", {})),
         slugs.map((slug) => {
           const r = sdResumo(slug);
@@ -1446,7 +1446,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       el("div", { class: "sugg" }, "* sem plano para o dia: usa o orçamento ativo de hoje (" + brl(r.orc) + "). Pagamentos entram descontando o imposto de " + (numDot(cfg.imposto) || 0) + "%."));
     const alertas = (r.d.alertas || []).slice(0, 10);
     const alBox = el("div", { class: "sd-card" }, el("div", { class: "label" }, "Alertas recentes"), alertas.length ? alertas.map((a) => el("div", { class: "sugg" }, new Date(a.quando).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) + " · " + a.txt)) : el("div", { class: "sugg" }, "Nenhum alerta."));
-    return [head, kpis, contas, cfgBox, invest, planoBox, projBox, alBox];
+    return [head, agPushBox(), kpis, contas, cfgBox, invest, planoBox, projBox, alBox];
   }
 
   /* ---------- Links ---------- */
@@ -2070,8 +2070,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     let txt, acao = null;
     if (ehIOS() && !ehApp()) txt = "Para receber os avisos no iPhone: toque em Compartilhar → “Adicionar à Tela de Início”, abra a Central pelo ícone e ative aqui.";
     else if (!temSW) txt = "Este navegador não recebe avisos. Abra pelo app da Central no celular (Chrome no Android ou ícone na tela de início no iPhone).";
-    else if (ligado) txt = "🔔 Avisos ligados neste aparelho: todo dia às 7h chega o resumo do que tem dia ou hora marcados.";
-    else { txt = "Receba todo dia às 7h o resumo do que tem dia ou hora marcados."; acao = el("button", { class: "btn primary", type: "button", onclick: (e) => agAtivarAvisos(e.currentTarget) }, "🔔 Ativar avisos"); }
+    else if (ligado) txt = "🔔 Avisos ligados neste aparelho: resumo do dia às 7h e alertas de saldo das contas.";
+    else { txt = "Receba no celular o resumo do dia às 7h e os alertas de saldo das contas."; acao = el("button", { class: "btn primary", type: "button", onclick: (e) => agAtivarAvisos(e.currentTarget) }, "🔔 Ativar avisos"); }
     return el("div", { class: "ag-push" }, el("span", { style: "flex:1;min-width:200px" }, txt), acao, state.agPushMsg ? el("span", { style: "color:var(--bad);flex-basis:100%" }, state.agPushMsg) : null);
   }
   function viewAgenda() {
