@@ -1932,7 +1932,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     });
     Object.keys(state.proximos || {}).forEach((slug) => proxOf(slug).forEach((p, i) => { if (dentro(p.prazo)) out.push({ fonte: "proximo", id: slug + ":" + i, idx: i, titulo: p.texto || "Próximo passo", data: p.prazo, hora: "", cliente: slug, principal: true, feito: !!p.feito }); }));
     if (state.agPost) (state.calendarios || []).forEach((c) => (c.itens || []).forEach((it) => { if (dentro(it.data)) out.push({ fonte: "post", id: c.id + ":" + it.id, titulo: it.pauta || it.formato || "Post", data: it.data, hora: it.hora || "", cliente: c.cliente || "", principal: false, feito: /postad|publicad/i.test(it.status || "") }); }));
-    return out.filter((x) => todos || (state.agCli === "__pessoal" ? x.pessoal : state.agCli ? x.cliente === state.agCli && !x.pessoal : !(state.agSemPessoal && x.pessoal)))
+    return out.filter((x) => todos || (state.agCli === "__pessoal" ? x.pessoal && (state.aba !== "pessoal" || !state.pePessoa || x.pessoa === state.pePessoa) : state.agCli ? x.cliente === state.agCli && !x.pessoal : !(state.agSemPessoal && x.pessoal)))
       .sort((a, b) => a.data.localeCompare(b.data) || (a.feito ? 1 : 0) - (b.feito ? 1 : 0) || (a.hora || "99").localeCompare(b.hora || "99") || a.titulo.localeCompare(b.titulo, "pt-BR"));
   }
   const faixaHora = (a) => a.hora ? a.hora + (a.horaFim ? "–" + a.horaFim : "") : "";
@@ -2089,7 +2089,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   function agDia() {
     const d = agRef(); const hoje = today();
     const its = agItens(d, d);
-    const atras = d === hoje ? agItens(addD(hoje, -30), addD(hoje, -1)).filter((x) => !x.feito && x.fonte !== "post") : [];
+    const atras = d === hoje ? agItens(addD(hoje, -30), addD(hoje, -1)).filter((x) => !x.feito && !x.repete && x.fonte !== "post") : [];
     return el("div", { class: "ag-dayview" },
       its.length ? its.map((x) => agItem(x, { notas: true })) : el("div", { class: "empty" }, "Nada marcado para este dia."),
       agQuickInput(d, false, "+ adicionar (ex.: 14h-16h reunião, manhã gravar)"),
@@ -2260,16 +2260,30 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         el("button", { class: "btn", type: "button", "data-label": "Tirar " + n, onclick: twoStep(() => salvar(pePessoas().filter((_, k) => k !== i))) }, "Tirar")))),
       el("div", { style: "display:flex;gap:8px" }, inp, el("button", { class: "btn primary", type: "button", onclick: () => { const v = inp.value.trim(); if (v && !pePessoas().includes(v)) salvar(pePessoas().concat([v])); } }, "+ Pessoa"))];
   }
+  function peCal() {  // Dia / Semana / Mês só com o pessoal (mesmo motor do Calendário geral)
+    const setV = (v) => { state.agView = v; try { localStorage.setItem("agView", v); } catch (e) {} render(); };
+    const antes = state.agCli; state.agCli = "__pessoal";
+    try {
+      const corpo = state.agView === "mes" ? agMes() : state.agView === "dia" ? agDia() : agSemana();
+      return [el("div", { class: "ag-nav" },
+          el("div", { class: "seg" }, [["dia", "Dia"], ["semana", "Semana"], ["mes", "Mês"]].map(([k, n]) => el("button", { type: "button", "aria-pressed": String(state.agView === k), onclick: () => setV(k) }, n))),
+          el("button", { class: "btn", type: "button", "aria-label": "Anterior", onclick: () => agMover(-1) }, "‹"),
+          el("button", { class: "btn", type: "button", onclick: () => { state.agData = ""; render(); } }, "Hoje"),
+          el("button", { class: "btn", type: "button", "aria-label": "Próximo", onclick: () => agMover(1) }, "›"),
+          el("b", {}, agTitulo())),
+        corpo];
+    } finally { state.agCli = antes; }
+  }
   const peSetView = (v) => { state.peView = v; state.agEdit = ""; try { localStorage.setItem("peView", v); } catch (e) {} render(); };
   function viewPessoal() {
-    const V = [["hoje", "Hoje"], ["rotina", "Rotina diária"], ["saude", "Saúde"], ["casa", "Casa"], ["mercado", "Mercado"], ["familia", "Pessoas"]];
+    const V = [["hoje", "Hoje"], ["cal", "Dia · Semana · Mês"], ["rotina", "Rotina diária"], ["saude", "Saúde"], ["casa", "Casa"], ["mercado", "Mercado"], ["familia", "Pessoas"]];
     const v = V.some(([k]) => k === state.peView) ? state.peView : "hoje";
     const corpo = v === "rotina" ? peRotinas("rotina", "Atividades do seu dia a dia. As fixas aparecem todo dia no calendário com caixinha.", "+ Rotina", { repete: "diario" })
       : v === "casa" ? peRotinas("casa", "Tarefas da casa: limpeza, contas, manutenção, compras fixas.", "+ Tarefa da casa", { repete: "semanal" })
-      : v === "saude" ? peSaude() : v === "mercado" ? peMercado() : v === "familia" ? peFamilia() : peHoje();
+      : v === "cal" ? peCal() : v === "saude" ? peSaude() : v === "mercado" ? peMercado() : v === "familia" ? peFamilia() : peHoje();
     return [
       el("div", { class: "seg" }, V.map(([k, n]) => el("button", { type: "button", "aria-pressed": String(v === k), onclick: () => peSetView(k) }, n))),
-      ["hoje", "rotina", "saude", "casa"].includes(v) ? el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between" }, peChipsPessoa(),
+      ["hoje", "cal", "rotina", "saude", "casa"].includes(v) ? el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between" }, peChipsPessoa(),
         v === "hoje" ? el("button", { class: "btn primary", type: "button", onclick: () => peNovo({ data: today() }) }, "+ Atividade pessoal") : null) : null,
       peForm(),
       ...corpo.filter(Boolean)];
