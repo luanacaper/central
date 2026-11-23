@@ -413,6 +413,29 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
   .topbar { background: rgba(255,255,255,.94); }
   .ag-col.hoje { box-shadow: none; }
 }
+/* Dia em grade de horas (arrastar) */
+.tl-wrap { display: grid; gap: 10px; }
+.tl-sem { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tl-chip { display: inline-flex; gap: 6px; align-items: center; padding: 6px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; font-weight: 600; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+.tl-chip.f-pessoal { border-left: 3px solid #7F9A6B; } .tl-chip.feito { opacity: .55; text-decoration: line-through; }
+.tl { position: relative; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+.tl-h { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
+.tl-h span { position: absolute; left: 6px; top: 2px; font-size: 11px; font-weight: 700; color: var(--muted); font-family: var(--font-mono); }
+.tl-h.meia { border-top-style: dashed; opacity: .55; }
+.tl-slot { position: absolute; left: 0; right: 0; cursor: pointer; }
+.tl-slot:hover { background: color-mix(in srgb, var(--mint) 6%, transparent); }
+.tl-b { position: absolute; border-radius: 9px; padding: 4px 7px; background: color-mix(in srgb, var(--mint) 16%, var(--surface)); border-left: 3px solid var(--mint); font-size: 12.5px; line-height: 1.25; overflow: hidden; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: pan-y; display: flex; gap: 6px; align-items: flex-start; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.tl-b.f-pessoal { background: color-mix(in srgb, #7F9A6B 18%, var(--surface)); border-left-color: #7F9A6B; }
+.tl-b.f-proximo { background: color-mix(in srgb, #C99A2E 18%, var(--surface)); border-left-color: #C99A2E; cursor: pointer; }
+.tl-b.feito { opacity: .5; } .tl-b.feito b { text-decoration: line-through; }
+.tl-b b { font-weight: 700; display: block; } .tl-b small { display: block; color: var(--muted); font-size: 11px; font-weight: 600; }
+.tl-b .tl-t { font-family: var(--font-mono); font-weight: 800; color: var(--mint); font-size: 11px; }
+.tl-b input { margin: 1px 0 0; accent-color: var(--mint); flex: none; }
+.tl-drag { position: fixed; z-index: 60; pointer-events: none; opacity: .92; box-shadow: 0 8px 24px rgba(0,0,0,.18); cursor: grabbing; }
+.tl-guia { position: absolute; left: 44px; right: 6px; height: 2px; background: var(--mint); z-index: 3; pointer-events: none; }
+.tl-guia span { position: absolute; left: 0; top: -18px; background: var(--mint); color: var(--on-mint); font-size: 11px; font-weight: 800; border-radius: 6px; padding: 1px 6px; font-family: var(--font-mono); }
+.tl-agora { position: absolute; left: 40px; right: 0; height: 2px; background: #D64545; z-index: 2; pointer-events: none; }
+.tl-agora::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #D64545; }
 /* Pessoal */
 .ag-it.f-pessoal { border-left-color: #7F9A6B; }
 .ag-day .mi.f-pessoal { border-left-color: #7F9A6B; }
@@ -2016,7 +2039,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       try {
         if (novo) await db.collection("agenda").add(Object.assign({ feito: false, criadoEm: agora }, body));
         else await db.collection("agenda").doc(a.id).update(body);
-        state.agEdit = ""; render();
+        state.agEdit = ""; state.agPresetAg = null; render();
       } catch (e) { fail(e); }
     };
     t.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); salvar(); } });
@@ -2039,7 +2062,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       el("div", { class: "field" }, el("label", { for: fid + "n" }, "Anotações"), n),
       el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center" },
         el("button", { class: "btn primary", type: "button", onclick: salvar }, novo ? "Adicionar" : "Salvar"),
-        el("button", { class: "btn", type: "button", onclick: () => { state.agEdit = ""; render(); } }, "Cancelar"),
+        el("button", { class: "btn", type: "button", onclick: () => { state.agEdit = ""; state.agPresetAg = null; render(); } }, "Cancelar"),
         novo ? null : el("button", { class: "linkbtn", type: "button", style: "color:var(--bad);margin-left:auto", "data-label": "Apagar atividade", onclick: twoStep(async () => { try { await db.collection("agenda").doc(a.id).delete(); state.agEdit = ""; render(); } catch (e) { fail(e); } }) }, "Apagar atividade")));
   }
   function agQuickInput(data, principal, ph) {
@@ -2086,12 +2109,113 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         its.filter((x) => x.data === d).map((x) => agItem(x)), agQuickInput(d, false));
     }));
   }
+  /* Dia em grade de horas: arrastar muda o horário (mouse ou dedo; no celular segure um instante antes de arrastar) */
+  const TL_H0 = 6, TL_H1 = 24, TL_PX = 56;  // das 6h à meia-noite, 56 px por hora
+  const hm = (m) => pad(Math.floor(m / 60)) + ":" + pad(m % 60);
+  const mOf = (h) => { const [a, b] = String(h).split(":"); return (+a) * 60 + (+b || 0); };
+  function tlArrastar(node, x, onTap) {
+    let st = null;
+    const fim = (e) => {
+      document.removeEventListener("pointermove", mover); document.removeEventListener("pointerup", fim); document.removeEventListener("pointercancel", fim);
+      document.removeEventListener("touchmove", trava, { passive: false });
+      clearTimeout(st && st.timer);
+      if (!st) return;
+      const s0 = st; st = null;
+      if (!s0.ativo) { if (e.type === "pointerup" && onTap) onTap(); return; }
+      s0.fantasma.remove(); s0.guia.remove(); node.style.opacity = "";
+      state.agDragging = false;
+      if (s0.novo !== null && e.type === "pointerup") tlSalvar(x, s0.novo); else render();
+    };
+    const trava = (e) => { if (st && st.ativo) e.preventDefault(); };
+    const ativar = () => {
+      st.ativo = true; state.agDragging = true;
+      const r = node.getBoundingClientRect();
+      st.fantasma = node.cloneNode(true); st.fantasma.classList.add("tl-drag");
+      Object.assign(st.fantasma.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" });
+      document.body.append(st.fantasma); node.style.opacity = ".35";
+      st.guia = el("div", { class: "tl-guia" }, el("span")); st.guia.hidden = true;
+      const tl = document.querySelector(".tl"); if (tl) tl.append(st.guia);
+      st.dy = st.y0 - r.top; st.left0 = r.left;
+      if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+    };
+    const mover = (e) => {
+      if (!st) return;
+      if (!st.ativo) {
+        if (Math.abs(e.clientY - st.y0) > 8 || Math.abs(e.clientX - st.x0) > 8) { if (st.touch) { clearTimeout(st.timer); st = null; document.removeEventListener("pointermove", mover); } else ativar(); }
+        if (!st || !st.ativo) return;
+      }
+      e.preventDefault();
+      st.fantasma.style.top = (e.clientY - st.dy) + "px"; st.fantasma.style.left = (st.left0 + (e.clientX - st.x0)) + "px";
+      const tl = document.querySelector(".tl"); const tr = tl && tl.getBoundingClientRect();
+      if (tr && e.clientY >= tr.top && e.clientY <= tr.bottom && e.clientX >= tr.left && e.clientX <= tr.right) {
+        const dur = x.dur || 60;
+        let m = TL_H0 * 60 + ((e.clientY - st.dy + (x.bloco ? 0 : st.dy) - tr.top) / TL_PX) * 60;
+        m = Math.round(m / 15) * 15; m = Math.max(TL_H0 * 60, Math.min(TL_H1 * 60 - Math.min(dur, 60), m));
+        st.novo = m;
+        st.guia.hidden = false; st.guia.style.top = ((m - TL_H0 * 60) / 60 * TL_PX) + "px"; st.guia.firstChild.textContent = hm(m) + (x.horaFim || x.dur ? "–" + hm(Math.min(m + dur, 1439)) : "");
+      } else { st.novo = null; st.guia.hidden = true; }
+      if (e.clientY < 60) window.scrollBy(0, -12); else if (e.clientY > window.innerHeight - 60) window.scrollBy(0, 12);
+    };
+    node.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || e.target.closest("input,button,a")) return;
+      st = { x0: e.clientX, y0: e.clientY, touch: e.pointerType !== "mouse", ativo: false, novo: null };
+      if (st.touch) st.timer = setTimeout(() => { if (st && !st.ativo) ativar(); }, 280);
+      document.addEventListener("pointermove", mover); document.addEventListener("pointerup", fim); document.addEventListener("pointercancel", fim);
+      document.addEventListener("touchmove", trava, { passive: false });
+    });
+    node.addEventListener("contextmenu", (e) => { if (st) e.preventDefault(); });
+  }
+  async function tlSalvar(x, m) {
+    const a = x.raw || {}; const dur = a.hora && a.horaFim ? mOf(a.horaFim) - mOf(a.hora) : 0;
+    const body = { hora: hm(m), horaFim: dur > 0 ? hm(Math.min(m + dur, 23 * 60 + 59)) : "", editadoEm: new Date().toISOString() };
+    try { await db.collection("agenda").doc(x.id).update(body); } catch (e) { fail(e); }
+    render();
+  }
+  function agTimeline(d, its) {
+    const comHora = its.filter((x) => x.hora), semHora = its.filter((x) => !x.hora);
+    const blocos = comHora.map((x) => { const a = x.raw || {}; const ini = mOf(a.hora || x.hora.slice(0, 5)); const fimM = a.horaFim ? mOf(a.horaFim) : ini + 60; return Object.assign({}, x, { ini, fimM: Math.max(fimM, ini + 30) }); })
+      .sort((a, b) => a.ini - b.ini);
+    // colunas para atividades no mesmo horário
+    const cols = []; blocos.forEach((b) => { let c = 0; while (cols[c] && cols[c] > b.ini) c++; cols[c] = b.fimM; b.col = c; });
+    blocos.forEach((b) => { b.ncol = 1 + Math.max(...blocos.filter((o) => o.ini < b.fimM && o.fimM > b.ini).map((o) => o.col)); });
+    const H = (TL_H1 - TL_H0) * TL_PX;
+    const novoEm = (m) => { const preset = { data: d, hora: hm(m) }; if (state.aba === "pessoal") peNovo(preset); else { state.agPresetAg = preset; state.agEdit = "novo"; render(); } };
+    const linhas = [];
+    for (let h = TL_H0; h < TL_H1; h++) {
+      linhas.push(el("div", { class: "tl-h", style: "top:" + ((h - TL_H0) * TL_PX) + "px" }, el("span", {}, pad(h) + "h")));
+      linhas.push(el("div", { class: "tl-h meia", style: "top:" + ((h - TL_H0) * TL_PX + TL_PX / 2) + "px" }));
+      [0, 30].forEach((mm) => linhas.push(el("button", { class: "tl-slot", type: "button", "aria-label": "Nova atividade às " + pad(h) + ":" + pad(mm), style: "top:" + ((h - TL_H0) * TL_PX + mm / 60 * TL_PX) + "px;height:" + (TL_PX / 2) + "px;border:0;background:transparent", onclick: () => novoEm(h * 60 + mm) })));
+    }
+    const caixas = blocos.map((b) => {
+      const top = (Math.max(b.ini, TL_H0 * 60) - TL_H0 * 60) / 60 * TL_PX, alt = Math.max(24, (b.fimM - Math.max(b.ini, TL_H0 * 60)) / 60 * TL_PX - 2);
+      const larg = "calc((100% - 50px) / " + b.ncol + " - 4px)", esq = "calc(46px + (100% - 50px) / " + b.ncol + " * " + b.col + ")";
+      const quem = b.pessoal ? (b.pessoa || "pessoal") : b.cliente ? cliName(b.cliente) : "";
+      const n = el("div", { class: "tl-b f-" + b.fonte + (b.pessoal ? " f-pessoal" : "") + (b.feito ? " feito" : ""), style: "top:" + top + "px;height:" + alt + "px;left:" + esq + ";width:" + larg, title: b.titulo },
+        b.fonte === "post" ? null : el("input", { type: "checkbox", checked: b.feito, "aria-label": "Feito: " + b.titulo, onchange: (e) => agToggle(b, e.target.checked) }),
+        el("div", { style: "min-width:0" }, el("span", { class: "tl-t" }, b.hora), el("b", {}, b.titulo), alt > 40 && quem ? el("small", {}, quem + (b.repete ? " · 🔁" : "") + (b.raw && b.raw.externo ? " · 📍" : "")) : null));
+      const abrir = () => { if (b.fonte === "agenda") { state.agEdit = b.id; render(); } else if (b.fonte === "proximo") go({ aba: "estrategia", cli: b.cliente }); };
+      if (b.fonte === "agenda") tlArrastar(n, Object.assign({}, b, { bloco: true, dur: b.fimM - b.ini, horaFim: b.raw && b.raw.horaFim }), abrir); else n.addEventListener("click", abrir);
+      return n;
+    });
+    const agora = new Date(); const am = agora.getHours() * 60 + agora.getMinutes();
+    const linhaAgora = d === today() && am >= TL_H0 * 60 ? el("div", { class: "tl-agora", style: "top:" + ((am - TL_H0 * 60) / 60 * TL_PX) + "px" }) : null;
+    const chips = semHora.map((x) => {
+      const c = el("span", { class: "tl-chip" + (x.pessoal ? " f-pessoal" : "") + (x.feito ? " feito" : ""), role: "button", tabindex: "0", title: "Arraste para um horário" }, "⠿ " + x.titulo);
+      const abrir = () => { if (x.fonte === "agenda") { state.agEdit = x.id; render(); } else if (x.fonte === "proximo") go({ aba: "estrategia", cli: x.cliente }); };
+      if (x.fonte === "agenda") tlArrastar(c, Object.assign({}, x, { bloco: false, dur: 60 }), abrir); else c.addEventListener("click", abrir);
+      return c;
+    });
+    return el("div", { class: "tl-wrap" },
+      semHora.length ? el("div", { class: "tl-sem" }, el("span", { class: "sugg" }, "Sem horário (arraste para a grade):"), chips) : null,
+      el("div", { class: "sugg" }, "Arraste para mudar o horário" + (matchMedia("(pointer: coarse)").matches ? " (segure um instante antes de arrastar)" : "") + ". Toque num horário vazio para criar."),
+      el("div", { class: "tl", style: "height:" + H + "px" }, linhas, linhaAgora, caixas));
+  }
   function agDia() {
     const d = agRef(); const hoje = today();
     const its = agItens(d, d);
     const atras = d === hoje ? agItens(addD(hoje, -30), addD(hoje, -1)).filter((x) => !x.feito && !x.repete && x.fonte !== "post") : [];
-    return el("div", { class: "ag-dayview" },
-      its.length ? its.map((x) => agItem(x, { notas: true })) : el("div", { class: "empty" }, "Nada marcado para este dia."),
+    return el("div", { class: "ag-dayview", style: "max-width:820px" },
+      agTimeline(d, its),
       agQuickInput(d, false, "+ adicionar (ex.: 14h-16h reunião, manhã gravar)"),
       atras.length ? el("h2", { style: "margin:14px 0 0" }, "Atrasadas (" + atras.length + ")") : null,
       atras.map((x) => agItem(x, { data: true })));
@@ -2141,7 +2265,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   }
   function viewAgenda() {
     const setV = (v) => { state.agView = v; try { localStorage.setItem("agView", v); } catch (e) {} render(); };
-    const editando = state.agEdit === "novo" ? agForm(state.agPreset && state.agPreset.pessoal && state.agCli === "__pessoal" ? state.agPreset : null) : state.agEdit ? agForm(state.agenda.find((a) => a.id === state.agEdit) || null) : null;
+    const editando = state.agEdit === "novo" ? agForm(state.agPresetAg || (state.agPreset && state.agPreset.pessoal && state.agCli === "__pessoal" ? state.agPreset : null)) : state.agEdit ? agForm(state.agenda.find((a) => a.id === state.agEdit) || null) : null;
     const cli = el("select", { "aria-label": "Filtrar por cliente", style: "border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:7px 10px;font-size:14px", onchange: (e) => { state.agCli = e.target.value; render(); } },
       el("option", { value: "" }, "Tudo (trabalho + pessoal)"), el("option", { value: "__pessoal" }, "♥ Só pessoal"), cfgClients().map((x) => el("option", { value: x.slug }, x.nome))); cli.value = state.agCli || "";
     return [
@@ -2156,7 +2280,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
             el("button", { class: "btn", type: "button", "aria-label": "Próximo", onclick: () => agMover(1) }, "›"),
             el("b", {}, agTitulo())),
           el("div", { class: "ag-nav" }, cli,
-            el("button", { class: "btn primary", type: "button", onclick: () => { state.agEdit = "novo"; render(); } }, "+ Atividade"))),
+            el("button", { class: "btn primary", type: "button", onclick: () => { state.agPresetAg = null; state.agEdit = "novo"; render(); } }, "+ Atividade"))),
         editando,
         el("div", { class: "ag-legend" },
           el("span", {}, el("i", { style: "background:var(--mint)" }), "atividade"),
@@ -2670,7 +2794,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   }
 
   let raf = 0;
-  function render() { clearTimeout(raf); raf = setTimeout(renderNow, 0); }
+  function render() { clearTimeout(raf); raf = setTimeout(() => { if (state.agDragging) render(); else renderNow(); }, state.agDragging ? 300 : 0); }
   function renderNow() {
     if (state.cli && state.cfg && !cfgClients().some((c) => c.slug === state.cli)) state.cli = "";
     renderNav(); renderSide(); renderGoal();
