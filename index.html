@@ -436,6 +436,22 @@ input.cell-txt, select.cell-txt { width: 100%; text-align: left; font-family: va
 .tl-guia span { position: absolute; left: 0; top: -18px; background: var(--mint); color: var(--on-mint); font-size: 11px; font-weight: 800; border-radius: 6px; padding: 1px 6px; font-family: var(--font-mono); }
 .tl-agora { position: absolute; left: 40px; right: 0; height: 2px; background: #D64545; z-index: 2; pointer-events: none; }
 .tl-agora::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #D64545; }
+/* Organizar clientes */
+.rail-head { display: flex; align-items: center; justify-content: space-between; padding-right: 6px; }
+.rail-org { border: 0; background: var(--rail-2); color: var(--rail-ink); font-size: 12px; font-weight: 700; border-radius: 8px; padding: 4px 9px; cursor: pointer; }
+.org-fundo { position: fixed; inset: 0; z-index: 70; background: rgba(58,38,30,.45); display: grid; place-items: center; padding: 16px; }
+.org-card { background: var(--surface); color: var(--ink); width: min(460px, 100%); max-height: 88vh; overflow: auto; border-radius: 18px; padding: 16px; display: grid; gap: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.org-card h3 { margin: 0; font-size: 18px; font-weight: 800; }
+.org-l { display: grid; gap: 6px; }
+.org-r { display: grid; grid-template-columns: 26px 30px 1fr auto auto auto; gap: 6px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.org-r.arrastando { opacity: .5; border-style: dashed; }
+.org-r .av { width: 30px; height: 30px; font-size: 11px; }
+.org-r .av .st { display: none; }
+.org-r b { font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.org-mao { cursor: grab; touch-action: none; color: var(--muted); font-size: 18px; text-align: center; user-select: none; -webkit-user-select: none; }
+.org-r .btn { padding: 4px 9px; font-size: 13px; }
+.org-conf { grid-column: 1 / -1; display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: var(--bad-soft); font-size: 13px; }
+.org-conf input { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 14px; background: var(--surface); }
 /* Pessoal */
 .ag-it.f-pessoal { border-left-color: #7F9A6B; }
 .ag-day .mi.f-pessoal { border-left-color: #7F9A6B; }
@@ -582,7 +598,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       <div><b>Negócios Creators</b><small>Central de gestão</small></div>
     </div>
     <div class="goal rgoal" id="goal"></div>
-    <h2>Clientes</h2>
+    <div class="rail-head"><h2>Clientes</h2><button class="rail-org" id="cli-org" type="button" title="Mover, adicionar ou remover clientes">⇅ Organizar</button></div>
     <div class="clients" id="side"></div>
     <h2 style="margin-top:14px">Pessoal</h2>
     <div class="clients" id="pess"></div>
@@ -725,7 +741,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         st.pend ? el("span", { class: "badge", title: st.pend + " pendência(s) suas" }, st.pend) : el("span"));
     };
     const list = () => [btn("", "Visão geral", "todos os clientes", 0), ...cfgClients().map((c, i) => btn(c.slug, c.nome, c.dona ? "sua empresa" : null, i))];
-    $("#side").replaceChildren(...list(), el("div", { class: "addrow", style: "margin-top:10px" }, addIn, el("button", { class: "btn", type: "button", onclick: add }, "+")));
+    $("#side").replaceChildren(...list());
+    const orgB = $("#cli-org"); if (orgB) orgB.onclick = () => { state.cliOrg = true; state.orgDel = ""; render(); };
     const hojeN = agHoje().length;
     const tool = (k, nome, sub, badge) => el("button", { class: "cbtn", "aria-current": String(state.aba === k), onclick: () => go({ aba: k }) },
       el("span", { class: "av", style: "background:var(--rail-2)" }, icon(k)), el("span", {}, nome, el("small", {}, sub)), badge ? el("span", { class: "badge", title: badge + " atividade(s) hoje" }, badge) : el("span"));
@@ -735,7 +752,83 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
     const mercN = (state.mercado || []).filter((m) => !m.comprado).length;
     const pess = () => tool("pessoal", "Pessoal", [peHojeN ? peHojeN + " hoje" : "rotina, saúde, casa", mercN ? mercN + " no mercado" : ""].filter(Boolean).join(" · "), peHojeN);
     $("#pess").replaceChildren(pess());
-    $("#mside").replaceChildren(tools()[0], pess(), ...tools().slice(1), ...list());
+    $("#mside").replaceChildren(tools()[0], pess(), ...tools().slice(1), ...list(),
+      el("button", { class: "cbtn", type: "button", onclick: () => { state.cliOrg = true; state.orgDel = ""; render(); } }, el("span", { class: "av", style: "background:var(--surface-2)" }, "⇅"), el("span", {}, "Organizar"), el("span")));
+  }
+
+  /* ---------- Organizar clientes (ordem, adicionar, remover com confirmação) ---------- */
+  const semAcento = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  async function orgSalvar(lista, extra) {
+    try { await db.doc("config/negocio").update(Object.assign({ clientes: lista }, extra || {})); } catch (e) { fail(e); }
+  }
+  function orgMover(i, j) {
+    const l = cfgClients().slice(); if (j < 0 || j >= l.length) return;
+    const [x] = l.splice(i, 1); l.splice(j, 0, x); orgSalvar(l);
+  }
+  function orgArrastar(mao, linha, i) {
+    mao.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); try { mao.setPointerCapture(e.pointerId); } catch (x) {}
+      const lista = linha.parentElement; linha.classList.add("arrastando"); state.agDragging = true;
+      let alvo = i;
+      const mover = (ev) => {
+        const linhas = [...lista.querySelectorAll(".org-r")];
+        alvo = linhas.findIndex((r) => ev.clientY < r.getBoundingClientRect().top + r.offsetHeight / 2); if (alvo < 0) alvo = linhas.length - 1;
+        const atual = linhas.indexOf(linha); if (alvo !== atual) lista.insertBefore(linha, alvo > atual ? linhas[alvo].nextSibling : linhas[alvo]);
+        alvo = [...lista.querySelectorAll(".org-r")].indexOf(linha);
+      };
+      const soltar = () => {
+        document.removeEventListener("pointermove", mover); document.removeEventListener("pointerup", soltar); document.removeEventListener("pointercancel", soltar);
+        linha.classList.remove("arrastando"); state.agDragging = false;
+        if (alvo !== i) orgMover(i, alvo); else render();
+      };
+      document.addEventListener("pointermove", mover); document.addEventListener("pointerup", soltar); document.addEventListener("pointercancel", soltar);
+    });
+  }
+  function renderOrg() {
+    let root = document.getElementById("org-root");
+    if (!state.cliOrg) { if (root) root.remove(); return; }
+    if (!root) { root = el("div", { id: "org-root" }); document.body.append(root); }
+    const cls = cfgClients(); const arq = (state.cfg && state.cfg.arquivados) || [];
+    const fechar = () => { state.cliOrg = false; state.orgDel = ""; render(); };
+    const novo = el("input", { id: "org-novo", placeholder: "Nome do novo cliente", style: "flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:15px;background:var(--surface)" });
+    const add = async () => {
+      const t = novo.value.trim(); if (!t || !state.cfg) return; novo.value = "";
+      let slug = slugify(t); if (cls.concat(arq).some((c) => c.slug === slug)) slug += "-" + Date.now().toString(36).slice(-3);
+      orgSalvar(cls.concat([{ slug, nome: t, rotina: [] }]));
+    };
+    novo.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); add(); } });
+    const linha = (c, i) => {
+      const mao = el("span", { class: "org-mao", title: "Arraste para mudar a ordem", "aria-hidden": "true" }, "⠿");
+      const r = el("div", { class: "org-r" }, mao,
+        el("span", { class: "av", style: "background:" + AVC[i % AVC.length] }, initials(c.nome)),
+        el("b", { title: c.nome }, c.nome),
+        el("button", { class: "btn", type: "button", "aria-label": "Subir " + c.nome, disabled: i === 0, onclick: () => orgMover(i, i - 1) }, "↑"),
+        el("button", { class: "btn", type: "button", "aria-label": "Descer " + c.nome, disabled: i === cls.length - 1, onclick: () => orgMover(i, i + 1) }, "↓"),
+        c.dona ? el("span", { class: "sugg", title: "Sua empresa não pode ser removida" }, "🔒") : el("button", { class: "btn", type: "button", "aria-label": "Remover " + c.nome, onclick: () => { state.orgDel = state.orgDel === c.slug ? "" : c.slug; state.orgTxt = ""; render(); } }, "🗑"));
+      orgArrastar(mao, r, i);
+      if (state.orgDel === c.slug) {
+        const inp = el("input", { id: "org-conf-" + c.slug, value: state.orgTxt || "", placeholder: c.nome, "aria-label": "Digite " + c.nome + " para confirmar" });
+        const ok = () => semAcento(inp.value) === semAcento(c.nome);
+        const b = el("button", { class: "btn", type: "button", style: "background:var(--bad);color:#fff;border-color:var(--bad)", disabled: !ok(),
+          onclick: () => { if (!ok()) return; state.orgDel = ""; orgSalvar(cls.filter((x) => x.slug !== c.slug), { arquivados: arq.filter((x) => x.slug !== c.slug).concat([Object.assign({}, c, { removidoEm: new Date().toISOString() })]) }); if (state.cli === c.slug) state.cli = ""; } }, "Remover da lista");
+        inp.addEventListener("input", () => { state.orgTxt = inp.value; b.disabled = !ok(); });
+        r.append(el("div", { class: "org-conf" },
+          el("span", {}, "Remover ", el("b", {}, c.nome), " da lista? Nada é apagado: planilhas, roteiros e histórico ficam guardados e dá pra restaurar aqui embaixo. Para confirmar, digite o nome do cliente:"),
+          inp, el("div", { style: "display:flex;gap:8px" }, b, el("button", { class: "btn", type: "button", onclick: () => { state.orgDel = ""; render(); } }, "Cancelar"))));
+        setTimeout(() => { const f = document.getElementById("org-conf-" + c.slug); if (f && document.activeElement !== f) f.focus(); }, 0);
+      }
+      return r;
+    };
+    const card = el("div", { class: "org-card", role: "dialog", "aria-modal": "true", "aria-label": "Organizar clientes" },
+      el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px" }, el("h3", {}, "Organizar clientes"), el("button", { class: "btn primary", type: "button", onclick: fechar }, "Concluir")),
+      el("p", { class: "sugg", style: "margin:0" }, "Arraste pelo ⠿ ou use ↑ ↓ para mudar a ordem. A ordem vale no computador e no celular."),
+      el("div", { class: "org-l" }, cls.map(linha)),
+      el("div", { style: "display:flex;gap:8px" }, novo, el("button", { class: "btn primary", type: "button", onclick: add }, "+ Adicionar")),
+      arq.length ? el("div", { style: "display:grid;gap:6px" }, el("h2", { style: "margin:6px 0 0" }, "Removidos (" + arq.length + ")"),
+        arq.map((c) => el("div", { class: "org-r", style: "grid-template-columns:1fr auto" }, el("b", {}, c.nome),
+          el("button", { class: "btn", type: "button", onclick: () => orgSalvar(cls.concat([Object.assign({}, c, { removidoEm: undefined })].map((x) => { const y = Object.assign({}, x); delete y.removidoEm; return y; })), { arquivados: arq.filter((x) => x.slug !== c.slug) }) }, "Restaurar")))) : null);
+    const fundo = el("div", { class: "org-fundo", onclick: (e) => { if (e.target === fundo) fechar(); } }, card);
+    keepFocus(() => root.replaceChildren(fundo));
   }
 
   /* ---------- Meta da Negócios Creators ---------- */
@@ -1395,7 +1488,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       const prev = sdPlano(cfg, dia); const gasto = prev !== null ? prev : orc;
       const g = i === 0 ? Math.max(0, gasto - hoje) : gasto;
       const pag = (cfg.pagamentos || []).filter((p) => p.data === dia).reduce((t, p) => t + (numDot(p.valor) || 0), 0);
-      s = s + pag / imp - g;
+      s = s + (dia > today() ? pag : 0) - g * imp;   // o saldo do Meta é o valor cheio pago; o imposto sai junto com cada gasto
       proj.push({ dia, gasto: g, plano: prev, pag, saldo: s });
       if (pagarAte === null && s < min) { furaEm = dia; pagarAte = i === 0 ? today() : sdAviso(dia); }
       if (acabaEm === null && s <= 0) acabaEm = dia;
@@ -1407,8 +1500,8 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       const ate = fimPlano && fimPlano > pagarAte ? fimPlano : sdAddDias(pagarAte, 7);
       const i0 = proj.findIndex((x) => x.dia === pagarAte);
       const base = i0 >= 0 ? proj[i0].saldo : saldo;
-      const falta = proj.filter((x) => x.dia > pagarAte && x.dia <= ate).reduce((t, x) => t + x.gasto, 0) + min - Math.max(0, base);
-      sugerido = falta > 0 ? { valor: falta * imp, midia: falta, ate } : null;
+      const falta = proj.filter((x) => x.dia > pagarAte && x.dia <= ate).reduce((t, x) => t + x.gasto * imp, 0) + min - Math.max(0, base);
+      sugerido = falta > 0 ? { valor: falta, midia: falta / imp, ate } : null;
     }
     const st = parada ? "bad" : saldo < min ? "bad" : pagarAte && pagarAte <= sdAddDias(today(), 2) ? "warn" : lidas.length ? "ok" : "na";
     return { d, cfg, lidas, saldo, orc, hoje, parada, proj, pagarAte, furaEm, acabaEm, sugerido, st, imp, min };
@@ -1476,7 +1569,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
       (cfg.pagamentos || []).slice().sort((a, b) => (a.data || "").localeCompare(b.data || "")).map((p) => el("div", { class: "sd-row" },
         el("input", { id: "sd-gd-" + p.id, type: "date", class: "cell", value: p.data || "", onchange: (e) => editPag(p.id, { data: e.target.value }) }),
         textBox("sd-gv-" + p.id, String(p.valor ?? ""), (x) => editPag(p.id, { valor: numDot(x) || 0 }), { input: true, attrs: { class: "cell", inputmode: "decimal", placeholder: "R$", style: "width:110px" } }),
-        el("span", { class: "sugg" }, "vira " + brl((numDot(p.valor) || 0) / r.imp) + " de mídia"),
+        el("span", { class: "sugg" }, "≈ " + brl((numDot(p.valor) || 0) / r.imp) + " de mídia + imposto"),
         textBox("sd-go-" + p.id, p.obs || "", (x) => editPag(p.id, { obs: x }), { input: true, attrs: { class: "cell", placeholder: "quem paga / obs.", style: "width:200px" } }),
         el("button", { class: "x", type: "button", title: "Apagar pagamento", onclick: () => sdSave(slug, { pagamentos: (cfg.pagamentos || []).filter((x) => x.id !== p.id) }) }, "×"))),
       el("div", {}, el("button", { class: "btn", type: "button", onclick: () => sdSave(slug, { pagamentos: (cfg.pagamentos || []).concat([{ id: sdId(), data: r.pagarAte || today(), valor: r.sugerido ? Math.round(r.sugerido.valor * 100) / 100 : 0, obs: "" }]) }) }, "+ Pagamento")));
@@ -1485,7 +1578,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
         r.proj.slice(0, 31).map((x) => el("tr", { class: (x.pag ? "pg " : "") + (x.saldo <= 0 ? "s-bad" : x.saldo < r.min ? "s-warn" : "") },
           el("td", {}, fmtDate(x.dia) + " " + ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][new Date(x.dia + "T12:00:00").getDay()] + (x.dia === r.pagarAte ? " · pagar até aqui" : "")),
           el("td", { class: "n" }, brl(x.gasto) + (x.plano === null ? " *" : "")), el("td", { class: "n" }, x.pag ? brl(x.pag) : ""), el("td", { class: "n" }, brl(x.saldo)))))),
-      el("div", { class: "sugg" }, "* sem plano para o dia: usa o orçamento ativo de hoje (" + brl(r.orc) + "). Pagamentos entram descontando o imposto de " + (numDot(cfg.imposto) || 0) + "%."));
+      el("div", { class: "sugg" }, "* sem plano para o dia: usa o orçamento ativo de hoje (" + brl(r.orc) + "). O saldo do Meta é o valor pago cheio; cada gasto consome mídia + " + (numDot(cfg.imposto) || 0) + "% de imposto."));
     const alertas = (r.d.alertas || []).slice(0, 10);
     const alBox = el("div", { class: "sd-card" }, el("div", { class: "label" }, "Alertas recentes"), alertas.length ? alertas.map((a) => el("div", { class: "sugg" }, new Date(a.quando).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) + " · " + a.txt)) : el("div", { class: "sugg" }, "Nenhum alerta."));
     return [head, agPushBox(), kpis, contas, cfgBox, invest, planoBox, projBox, alBox];
@@ -2797,7 +2890,7 @@ table.sh { border-collapse: separate; border-spacing: 0; font-size: 14px; min-wi
   function render() { clearTimeout(raf); raf = setTimeout(() => { if (state.agDragging) render(); else renderNow(); }, state.agDragging ? 300 : 0); }
   function renderNow() {
     if (state.cli && state.cfg && !cfgClients().some((c) => c.slug === state.cli)) state.cli = "";
-    renderNav(); renderSide(); renderGoal();
+    renderNav(); renderSide(); renderGoal(); renderOrg();
     const aba = state.aba; const titulo = aba === "prompts" ? "Prompts" : aba === "agenda" ? "Calendário geral" : aba === "pessoal" ? "Pessoal" : (ABAS.find(([k]) => k === aba) || [])[1];
     const head = el("div", { class: "mhead" }, el("div", { class: "ptitle" }, el("span", { class: "crumb" }, aba === "prompts" ? "Biblioteca da Negócios Creators" : aba === "agenda" ? "Negócios Creators · todas as frentes" : aba === "pessoal" ? "Só seu · ligado ao Calendário geral" : state.cli ? cliName(state.cli) : "Visão geral · todos os clientes"), el("h1", {}, titulo)));
     const body = aba === "estrategia" ? viewEstrategia() : aba === "trafego" ? viewTrafego() : aba === "planilhas" ? viewPlanilhas() : aba === "links" ? viewLinks() : aba === "roteiros" ? viewRoteiros() : aba === "calendario" ? viewCalendario() : aba === "campanhas" ? viewCampanhas() : aba === "saldos" ? viewSaldos() : aba === "prompts" ? viewPrompts() : aba === "agenda" ? viewAgenda() : aba === "pessoal" ? viewPessoal() : viewArea(aba);
